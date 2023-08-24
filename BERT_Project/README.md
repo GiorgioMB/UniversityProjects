@@ -17,9 +17,13 @@ To use the trained sentiment analysis model, follow these steps:
 * Run the notebook cells to initialize the model.
 * Input a financial-related statement (news headline, tweet, or short phrase) in the designated section.
 * The model will analyze the sentiment of the input and provide an output indicating whether the sentiment is positive, negative, or neutral, as well as the model's confidence score (ranging from 0 to 1) of its prediction.
+
 For those interested in the training process, the BERT Training.ipynb notebook provides insights into how the model was trained. It covers data preprocessing, model configuration using Hugging Face's Transformers library, fine-tuning, and evaluation.
 
 ---
-Feel free to explore, learn, and adapt this project to your needs. If you have any questions or suggestions, please feel free to reach out.
+Feel free to explore, learn, and adapt this project to your needs. 
+
+If you have any questions or suggestions, please feel free to reach out.
+
 Giorgio Micaletto
 giorgio.micaletto@studbocconi.it
