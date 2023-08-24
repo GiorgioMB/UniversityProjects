@@ -1,4 +1,4 @@
-# UniversityProjects
+# BERT Project
 Welcome to the Financial Sentiment Analysis project using BERT!  This repository contains the code and model necessary to analyze sentiment in finance-related textual data such as news headlines, tweets, and short phrases.  This project represents my introduction to natural language processing (NLP) and machine learning.
 
 ## Introduction
