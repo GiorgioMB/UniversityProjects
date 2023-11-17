@@ -55,6 +55,11 @@ all_val_loss = []
 all_conf_matrix = []
 best_params = {'num_filters': 16, 'kernel_size': 3, 'learning_rate': 0.0005}
 
+# num_filters: 16 - 64 step: 16
+# kernel_size: 3, 4, 5
+#learning_rate: e-2, e-4 step: e-2 - e-4 / 300
+
+
 # K-Fold Cross-Validation loop
 for train_index, val_index in kf.split(images):
     train_x, val_x = images[train_index], images[val_index]
