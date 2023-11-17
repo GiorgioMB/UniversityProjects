@@ -58,8 +58,26 @@ best_params = {'num_filters': 16, 'kernel_size': 3, 'learning_rate': 0.0005}
 # num_filters: 16 - 64 step: 16
 # kernel_size: 3, 4, 5
 #learning_rate: e-2, e-4 step: e-2 - e-4 / 300
-
-
+##TOFIND best
+model = tf.keras.Sequential([
+    tf.keras.layers.Rescaling(1./255),
+    tf.keras.layers.Conv2D(params['num_filters'], params['kernel_size'], activation='relu'),
+    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+    tf.keras.layers.Conv2D(params['num_filters'], params['kernel_size'], activation='relu'),
+    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+    tf.keras.layers.Conv2D(params['num_filters'], params['kernel_size'], activation='relu'),
+    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+    tf.keras.layers.Conv2D(params['num_filters'], params['kernel_size'], activation='relu'),
+    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+    #tf.keras.layers.Conv2D(params['num_filters'], params['kernel_size'], activation='relu'),
+    #tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, kernel_regularizer=tf.keras.regularizers.l1(l1_lambda_1), activation='relu'),
+    tf.keras.layers.Dense(64, kernel_regularizer=tf.keras.regularizers.l1(l1_lambda_1), activation='relu'),
+    tf.keras.layers.Dense(32, kernel_regularizer=tf.keras.regularizers.l1(l1_lambda_1), activation='relu'),
+    #tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(6)
+])
 # K-Fold Cross-Validation loop
 for train_index, val_index in kf.split(images):
     train_x, val_x = images[train_index], images[val_index]
