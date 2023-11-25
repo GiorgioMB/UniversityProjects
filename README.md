@@ -1,6 +1,6 @@
 # University Projects by Giorgio Micaletto
 
-Welcome to my University Projects repository, where I showcase the work I've done during my time at Bocconi University. This repository includes various projects developed individually and in collaboration with student associations like BAINSA (Bocconi Artificial Intelligence and Neuroscience Association) and BSDSA (Bocconi Students Data Science Association).
+Welcome to my University Projects repository, where I showcase the work I've done during my time at Bocconi University. This repository includes various projects developed individually and in collaboration with student associations like BAINSA (Bocconi Artificial Intelligence and Neuroscience Association), BSDSA (Bocconi Students Data Science Association) and BSML (Bocconi Students for Machine Learning).
 
 ## Projects Overview
 
