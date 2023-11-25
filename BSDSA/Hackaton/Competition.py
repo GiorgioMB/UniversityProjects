@@ -1,5 +1,3 @@
-#%%
-from pyparsing import col
 from xgboost import XGBClassifier
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -37,7 +35,7 @@ for column in categorical_features:
     dataframe[column] = le.fit_transform(dataframe[column])
     if column in test_df.columns:
         test_df[column] = le.transform(test_df[column])
-#print(sum(dataframe['target']/15296))
+
 extimator = XGBClassifier(n_estimators=313, learning_rate=0.04739413249200394, subsample = 0.8671713611539302, 
                           colsample_bytree = 0.8685007893738412,  n_jobs=4, max_depth = 3,
                           min_child_weight = 4, colsample_bylevel = 0.932968077860579)
@@ -55,5 +53,3 @@ dataframe_final = pd.DataFrame(pred_test, columns=['0','1'])
 test_df = pd.read_csv('test_no_tgt.csv')
 test_df['predicted_proba'] = dataframe_final['1']
 test_df.to_csv('submission.csv', index=False)
-
-# %%
