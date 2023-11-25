@@ -12,9 +12,10 @@ Welcome to my University Projects repository, where I showcase the work I've don
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
 - **Repository Link**: github.com/GiorgioMB/UniversityProjects/tree/main/BERT_Project
 
-### Stock Price Predictor (In Progress)
-- **Description**: Currently developing a predictive model for stock prices using various models, namely Linear Regression, Bayesian LSTM and NeuralProphet. (This project is not yet completed and will be uploaded upon completion.)
+### Financial Analysis (In Progress)
+- **Description**: Currently developing predictive models for stock prices using various techniques, including Linear Regression, Bayesian LSTM, and NeuralProphet. (This project is not yet completed and will be uploaded upon completion.)
 - **Status**: Ongoing
+
 
 ## About Me
 
