@@ -20,7 +20,7 @@ Welcome to the Hackaton folder. This directory contains Python scripts related t
 ### Overview
 - **Description**: This script focuses on hyperparameter optimization for an XGBoost classifier.
 - **Objective**: It aims to find the best set of hyperparameters for the XGBoost model to improve its performance in the hackathon competition.
-- **Data**: Similar to "Competition.py," it uses data from 'train.csv' and 'test_no_tgt.csv.'
+- **Data**: Similar to "Competition.py," it uses data from 'train.csv' and 'test_no_tgt.csv', which unfortunately I can't share.
 - **Key Steps**:
   1. Data preprocessing and feature engineering.
   2. Encoding categorical features.
