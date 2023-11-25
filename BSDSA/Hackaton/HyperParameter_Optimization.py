@@ -1,4 +1,3 @@
-#%%
 from xgboost import XGBClassifier
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -76,4 +75,4 @@ best_clf.fit(X_train, y_train)
 pred_test_positive = best_clf.predict_proba(X_test)[:, 1]
 roc_auc_test = roc_auc_score(y_test, pred_test_positive)
 print(f'ROC AUC score for the test set: {roc_auc_test}')
-# %%
+
