@@ -11,7 +11,7 @@ Welcome to the Hackaton folder. This directory contains Python scripts related t
 - **Key Steps**:
   1. Data preprocessing and feature engineering.
   2. Encoding categorical features.
-  3. Training an XGBoost classifier with predefined hyperparameters.
+  3. Training an XGBoost classifier with hyperparameters found in "Hyperparameter_optimization.py".
   4. Assessing the model's performance using ROC AUC score.
   5. Generating predictions for the test data and saving them in 'submission.csv.'
 
