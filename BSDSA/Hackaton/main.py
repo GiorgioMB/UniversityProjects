@@ -4,6 +4,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 
+##Data Preprocessing
 dataframe = pd.read_csv('train.csv')
 test_df = pd.read_csv('test_no_tgt.csv')
 dataframe = dataframe.drop(columns=['cat_1','cont_9','cont_10'])
@@ -29,12 +30,12 @@ test_df = test_df.drop(columns=['ID'])
 #print(dataframe['cat_2'].head(10))
 #print(dataframe.isna().sum())
 categorical_features = dataframe.select_dtypes(include=['object']).columns
-
 for column in categorical_features:
     le = LabelEncoder()
     dataframe[column] = le.fit_transform(dataframe[column])
     if column in test_df.columns:
         test_df[column] = le.transform(test_df[column])
+##
 
 extimator = XGBClassifier(n_estimators=313, learning_rate=0.04739413249200394, subsample = 0.8671713611539302, 
                           colsample_bytree = 0.8685007893738412,  n_jobs=4, max_depth = 3,
