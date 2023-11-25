@@ -25,7 +25,7 @@ Welcome to the Hackaton folder. This directory contains Python scripts related t
   1. Data preprocessing and feature engineering.
   2. Encoding categorical features.
   3. Implementing hyperparameter optimization using Optuna, specifically the TPE sampler.
-  4. Finding the best hyperparameters that minimize a custom objective function.
+  4. Finding the best hyperparameters that minimize the difference between the training and testing ROC AUC.
   5. Training the XGBoost classifier with the optimized hyperparameters.
   6. Evaluating the model's performance using ROC AUC score on the test set.
 
