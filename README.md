@@ -5,7 +5,7 @@ Welcome to my University Projects repository, where I showcase the work I've don
 ## Projects Overview
 
 ### BAINSA, BSDSA, BSML Projects
-- **Description**: A collection of projects done in collaboration with BAINSA, BSDSA BSML, reflecting my engagement with data science and machine learning.
+- **Description**: A collection of projects done in collaboration with BAINSA, BSDSA and BSML, reflecting my engagement with data science and machine learning.
 - **Key Learnings**: Hyperparameters optimization, feature map explanation
 
 ### Sentiment Analysis for Financial Headlines using BERT
