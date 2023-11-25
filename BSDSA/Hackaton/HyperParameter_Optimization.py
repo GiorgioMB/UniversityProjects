@@ -6,6 +6,7 @@ from sklearn.metrics import roc_auc_score
 import optuna
 from optuna.samplers import TPESampler
 
+##Data Preprocessing
 dataframe = pd.read_csv('train.csv')
 test_df = pd.read_csv('test_no_tgt.csv')
 dataframe = dataframe.drop(columns=['cat_1','cont_9','cont_10'])
@@ -37,6 +38,7 @@ for column in categorical_features:
     dataframe[column] = le.fit_transform(dataframe[column])
     if column in test_df.columns:
         test_df[column] = le.transform(test_df[column])
+##
 
 def objective(trial):
     param = {
