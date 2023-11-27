@@ -24,6 +24,3 @@ For those interested in the training process, the BERT Training.ipynb notebook p
 Feel free to explore, learn, and adapt this project to your needs. 
 
 If you have any questions or suggestions, please feel free to reach out.
-
-Giorgio Micaletto
-giorgio.micaletto@studbocconi.it
