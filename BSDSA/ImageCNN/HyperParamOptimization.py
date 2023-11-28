@@ -68,11 +68,9 @@ def objective(params):
         Dense(6,activation = 'softmax')
     ])
     
-    # Compile the model with the specified learning rate
     optimizer = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
     model.compile(optimizer=optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False), metrics=['accuracy'])
 
-    # Train the model (you should replace this with your data loading and training logic)
     model.fit(
         train_ds,
         epochs=10,
