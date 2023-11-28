@@ -58,23 +58,26 @@ def objective(params):
         MaxPooling2D(pool_size=(2, 2)),
         Conv2D(params['num_filters'], params['kernel_size'], activation='relu'),
         MaxPooling2D(pool_size=(2, 2)),
+        Conv2D(params['num_filters'], params['kernel_size'], activation='relu'),
+        MaxPooling2D(pool_size=(2, 2)),
         Flatten(),
         Dense(128, kernel_regularizer=tf.keras.regularizers.l1(params['l1_lambda']), activation='relu'),
         Dense(64, kernel_regularizer=tf.keras.regularizers.l1(params['l1_lambda']), activation='relu'),
         Dense(32, kernel_regularizer=tf.keras.regularizers.l1(params['l1_lambda']), activation='relu'),
+        Dense(16, activation='relu'),
         Dense(6,activation = 'softmax')
     ])
     
     # Compile the model with the specified learning rate
     optimizer = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
-    model.compile(optimizer=optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+    model.compile(optimizer=optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False), metrics=['accuracy'])
 
     # Train the model (you should replace this with your data loading and training logic)
     model.fit(
         train_ds,
-        epochs=16,
+        epochs=10,
         validation_data=val_ds,
-        verbose=0
+        verbose=2
     )
     
     predicted_probabilities = model.predict(val_ds)
@@ -85,12 +88,12 @@ def objective(params):
 # Define the hyperparameter search space
 space = {
     'num_filters': hp.choice('num_filters', [16, 32, 64]),
-    'kernel_size': hp.choice('kernel_size', [(3, 3), (5, 5), (7, 7)]),
-    'learning_rate': hp.loguniform('learning_rate', -4, -2),
+    'kernel_size': hp.choice('kernel_size', [3, 4, 5, 6, 7]),
+    'learning_rate': hp.loguniform('learning_rate', -10, -2),
     'l1_lambda': hp.loguniform('l1_lambda', -5, -1)
 }
 
-best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=50)
+best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=20)
 best_params = {
     'num_filters': [16, 32, 64][best['num_filters']],
     'kernel_size': [(3, 3), (5, 5), (7, 7)][best['kernel_size']],
@@ -127,4 +130,4 @@ model.compile(
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy']
     )
-model.summary()
+
