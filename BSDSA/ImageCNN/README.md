@@ -10,7 +10,8 @@ The repository consists of two main notebooks:
 - **Purpose**: Building the CNN model and optimizing its hyperparameters.
 - **Key Tasks**:
   - Designing the CNN architecture.
-  - Implementing various techniques for hyperparameter tuning to enhance model performance.
+  - Implementing optuna for hyperparameter tuning to enhance model performance.
+  - Write a custom EarlyStopping class to avoid overfitting
 
 ### 2. FeatureMaps.ipynb
 - **Purpose**: Training the CNN model and extracting feature maps for the first and last layers.
@@ -18,10 +19,11 @@ The repository consists of two main notebooks:
   - Training the model with optimized hyperparameters.
   - Visualizing feature maps to understand model decisions and enhance explainability.
 
-## Technologies Used
-- Python
-- TensorFlow/Keras
-- Various libraries for data manipulation and visualization.
+## Libraries Used
+- TensorFlow
+- Optuna
+- Sci-kit Learn
+- Kaggle
 
 ## Usage
 To explore these notebooks, you can clone the repository and run the Jupyter notebooks in an environment that supports TensorFlow and Keras.
