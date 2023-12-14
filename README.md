@@ -10,6 +10,7 @@ Welcome to my University Projects repository, where I showcase the work I've don
 
 ### Sentiment Analysis for Financial Headlines using BERT
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
+- 
 - [**Repository Link**](github.com/GiorgioMB/UniversityProjects/tree/main/BERT_Project)
 
 ### Financial Analysis (In Progress)
