@@ -14,7 +14,7 @@ Welcome to my University Projects repository, where I showcase the work I've don
 - [**Repository Link**](github.com/GiorgioMB/UniversityProjects/tree/main/BERT_Project)
 
 ### Financial Analysis (In Progress)
-- **Description**: Currently developing predictive models for stock prices using a Bayesian LSTM with NeuralProphet as a baseline for performance. (This project is not yet completed and will be uploaded upon completion.)
+- **Description**: Currently developing, in collaboration with a [colleague](https://github.com/BopaxDev), predictive models for stock prices using a Bayesian LSTM with NeuralProphet as a baseline for performance. (This project is not yet completed.) 
 - **Status**: Ongoing
 
 
