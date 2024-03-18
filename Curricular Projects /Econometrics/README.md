@@ -1,5 +1,6 @@
 # Project Overview
-I was in charge of a project, which focuses on the exploration and analysis of various economic and demographic indicators across countries over a period from 1995 to 2023. It aims to investigate the relationships between GDP per capita and other predictors. The study utilizes regression analysis, including linear regression and generalized least squares (GLS), to identify significant predictors of GDP per capita. Additionally, it explores the impact of geographical factors and political freedom on economic indicators.
+This project was a mandatory assignment for an Econometrics course, led and coded entirely by me as the team lead. It involved a comprehensive analysis of economic and demographic indicators across various countries from 1995 to 2023. The core objective was to examine the influences on GDP per capita by various predictors. Through rigorous statistical modeling, including linear regression, generalized least squares (GLS), and ARIMAX models, we identified significant predictors of GDP per capita and explored the impact of geographical and political factors on economic indicators. The project was recognized for its depth of analysis and clarity of insights, earning full marks in the course.
+
 
 # Project Structure
 1. **Downloading and Loading Libraries**: The script begins by installing and loading necessary R packages for data manipulation, statistical modeling, and visualization.
