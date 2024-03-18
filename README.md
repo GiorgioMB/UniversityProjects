@@ -12,7 +12,7 @@ Welcome to my University Projects repository, where I showcase the work I've don
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
 -  **Key Learnings**: Familiarising with BERT, Employing Cross Validation.
 
-### Curricolar
+### Curricular Projects
 - **Description**: This folder contains all the mandatory and optional projects I completed in my studies
 -  **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering
 
