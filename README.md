@@ -11,12 +11,10 @@ Welcome to my University Projects repository, where I showcase the work I've don
 ### Sentiment Analysis for Financial Headlines using BERT
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
 -  **Key Learnings**: Familiarising with BERT, Employing Cross Validation.
-- [**Repository Link**](github.com/GiorgioMB/UniversityProjects/tree/main/BERT_Project)
 
-### Financial Analysis (In Progress)
-- **Description**: Currently developing, in collaboration with a [colleague](https://github.com/BopaxDev), predictive models for stock prices using a Bayesian LSTM with NeuralProphet as a baseline for performance. (This project is not yet completed.) 
-- **Status**: Ongoing
-
+### Curricolar
+- **Description**: This folder contains all the mandatory and optional projects I completed in my studies
+-  **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering
 
 ## About Me
 
