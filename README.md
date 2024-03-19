@@ -1,6 +1,6 @@
 # University Projects
 
-Welcome to my University Projects repository, where I showcase the work I've done during my time at Bocconi University. This repository includes various projects developed individually and while partcipating in student associations like BAINSA (Bocconi Artificial Intelligence and Neuroscience Association), BSDSA (Bocconi Students Data Science Association) and BSML (Bocconi Students for Machine Learning).
+Welcome to my University Projects repository, where I showcase the work I've done during my time at Bocconi University. This repository includes various projects developed individually, as part of my coursework, and while participating in student associations like BAINSA (Bocconi Artificial Intelligence and Neuroscience Association), BSDSA (Bocconi Students Data Science Association), and BSML (Bocconi Students for Machine Learning).
 
 ## Projects Overview
 
@@ -12,13 +12,12 @@ Welcome to my University Projects repository, where I showcase the work I've don
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
 -  **Key Learnings**: Familiarising with BERT, Employing Cross Validation.
 
-### Curricular Projects
-- **Description**: This folder contains all the mandatory and optional projects I completed in my studies
--  **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering
+### Course-Related Projects
+- **Description**: This folder contains all the required and elective projects I completed during my studies.
+- **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering
 
 ## About Me
-
-I'm Giorgio Micaletto, a second-year student at Bocconi University, pursuing a degree in Economics, Management, and Computer Science. My academic journey is complemented by my involvement in various student associations, where I explore the intersection of technology and finance. 
+I'm Giorgio Micaletto, a second-year student at Bocconi University, where I am pursuing a degree in Economics, Management, and Computer Science. My academic journey has been enriched through my engagement in various student associations and a role as a research intern in the finance department at my university. This summer, I will further my research experience as a summer intern at Aalto University.
 
 ## Connect with Me
 
