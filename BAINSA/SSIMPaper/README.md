@@ -7,7 +7,7 @@ This project focuses on evaluating image super-resolution algorithms using the S
    - Description: This script implements a baseline recursive image super-resolution algorithm. It iteratively downscales an image and then upscales it back to the original size, evaluating SSIM values at each iteration.
 
 2. **Multiplier SSIM Evaluation**
-   - Script: `Multiplier SSIM Evaluation.py`
+   - Script: `Downscale Multiplier.py`
    - Description: This script evaluates SSIM values at various downscaling multipliers for image super-resolution. It computes SSIM values between the original image and the upscaled version for different multipliers.
 
 3. **Iterative Image Super-Resolution**
