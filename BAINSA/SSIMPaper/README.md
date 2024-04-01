@@ -11,7 +11,7 @@ This project focuses on evaluating image super-resolution algorithms using the S
    - Description: This script evaluates SSIM values at various downscaling multipliers for image super-resolution. It computes SSIM values between the original image and the upscaled version for different multipliers.
 
 3. **Iterative Image Super-Resolution**
-   - Script: `Iterative Image Super-Resolution.py`
+   - Script: `Downscale Upscale.py`
    - Description: This script implements an iterative image super-resolution algorithm. It downscales an image by a specified downscaler factor and iteratively upscales it back to the original size, evaluating SSIM values at each iteration.
 
 4. **Mean Squared Error Calculation**
