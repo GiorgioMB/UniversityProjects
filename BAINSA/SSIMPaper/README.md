@@ -19,7 +19,7 @@ This project focuses on evaluating image super-resolution algorithms using the S
    - Description: This script calculates the Mean Squared Error (MSE) between two images, providing a quantitative measure of error in image processing tasks.
 
 5. **Remini Image Super-Resolution**
-   - Script: `Remini Image Super-Resolution.py`
+   - Script: `Remini Recursive Downscale.py`
    - Description: This script utilizes the Remini AI API for image super-resolution. It sends downscaled images to the Remini API for enhancement and retrieves the upscaled images for evaluation.
 
 6. **SSIM Data**
