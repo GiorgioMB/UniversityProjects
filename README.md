@@ -10,7 +10,7 @@ Welcome to my University Projects repository, where I showcase the work I've don
 
 ### Sentiment Analysis of Financial Headlines using BERT
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
--  **Key Learnings**: Familiarising with BERT, Employing Cross Validation.
+-  **Key Learnings**: Introduction to NLP Models.
 
 ### Course-Related Projects
 - **Description**: This folder contains all the required and elective projects I completed during my studies.
