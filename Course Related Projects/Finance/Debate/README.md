@@ -10,9 +10,9 @@ I implemented the entire code myself. The core objective was to find a portfolio
 5. **Results Collection and Display**: The individual with the best overall fitness (considering all objectives) is identified, the allocation is displayed and portfolio metrics are calculated on the optimised portfolio 
 6. 
 # Libraries Used
-  - `pandas`
-  - `deap`
-  - `numpy`
+  - `pandas`: Used for data manipulation, loading data from Excel, and creating dataframes.
+  - `deap`:  Provides tools for implementing a Genetic Algorithm, including individual creation, mutation, crossover, and selection.
+  - `numpy`: Used for numerical computations and array manipulation, particularly relevant for portfolio calculations.
 
 This notebook demonstrates how a Genetic Algorithm can be used to optimize a portfolio allocation, balancing financial returns, 
 environmental impact, and diversification. The approach allows to find a portfolio that achieves the desired balance between these competing objectives.
