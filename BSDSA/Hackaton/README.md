@@ -28,9 +28,3 @@ Welcome to the Hackaton folder. This directory contains Python scripts related t
   4. Finding the best hyperparameters that minimize the difference between the training and testing ROC AUC.
   5. Training the XGBoost classifier with the optimized hyperparameters.
   6. Evaluating the model's performance using ROC AUC score on the test set.
-
-## Team Achievement
-
-I'm pleased to announce that the team to which I contributed in the hackathon won. The winning team was determined based on the production of the best lift curve from their predictions. This victory reflects the dedication and collaborative efforts of our team members.
-
-If you have any questions or inquiries, please don't hesitate to reach out.
