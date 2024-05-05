@@ -30,4 +30,5 @@ To explore these notebooks, you can clone the repository and run the Jupyter not
 
 ```bash
 git clone https://github.com/GiorgioMB/UniversityProjects.git
-cd UniversityProjects/BSDSA/ImageCNN```
+cd UniversityProjects/BSDSA/ImageCNN
+```
