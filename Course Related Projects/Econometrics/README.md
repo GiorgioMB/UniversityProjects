@@ -12,7 +12,7 @@ This project was a mandatory assignment for an Econometrics course, led and code
 
 # Libraries (and Languages) Used
 
-- **R Language**: The project is implemented in R, a programming language and environment for statistical computing and graphics.
+- **R Language**: The project is implemented in R.
 - **Key R Packages**:
   - `MASS`, `WDI`, `tidyr`, `dplyr`, `VIM`: Data manipulation and preprocessing.
   - `httr`, `jsonlite`, `maps`: Data retrieval and geographical information processing.
