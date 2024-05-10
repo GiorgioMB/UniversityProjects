@@ -14,7 +14,7 @@ Welcome to my University Projects repository, where I showcase the work I've don
 
 ### Course-Related Projects
 - **Description**: This folder contains all the required and elective projects I completed during my studies.
-- **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest.
+- **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest, Deprecated Library Restoration.
 
 ## About Me
 I'm Giorgio Micaletto, a second-year student at Bocconi University, where I am pursuing a degree in Economics, Management, and Computer Science. My academic journey has been enriched through my engagement in various student associations and a role as a research intern in the finance department at my university. This summer, I will further my research experience as a summer intern at Aalto University.
