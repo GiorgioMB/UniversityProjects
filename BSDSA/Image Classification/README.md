@@ -6,14 +6,14 @@ This repository contains the work I completed as part of a project with Bocconi 
 ## Project Structure
 The repository consists of two main notebooks:
 
-### 1. Hyperparameters.ipynb
+### 1. Hyperparameters Tuning.ipynb
 - **Purpose**: Building the CNN model and optimizing its hyperparameters.
 - **Key Tasks**:
   - Designing the CNN architecture.
   - Implementing optuna for hyperparameter tuning to enhance model performance.
   - Write a custom EarlyStopping class to avoid overfitting
 
-### 2. FeatureMaps.ipynb
+### 2. Feature Maps Extraction.ipynb
 - **Purpose**: Training the CNN model and extracting feature maps for the first and last layers.
 - **Key Tasks**:
   - Training the model with optimized hyperparameters.
