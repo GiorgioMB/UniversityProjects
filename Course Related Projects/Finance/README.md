@@ -1,6 +1,5 @@
 # Project Overview
-This project, completed for the Principle of Finance course, involved optimizing an investment portfolio using a Genetic Algorithm. 
-The core objective was to find a portfolio allocation that balanced financial returns, environmental impact (CO2 emissions), and diversification.
+This project, which was awarded full credits in the Principle of Finance course, involved optimizing an investment portfolio using a Genetic Algorithm. The core objective was to find a portfolio allocation that balanced financial returns, environmental impact (CO2 emissions), and diversification.
 
 # Project Structure
 1. **Downloading and Loading Libraries**: The notebook begins by installing and loading the necessary libraries, such as DEAP and pandas.
