@@ -12,6 +12,10 @@ Welcome to my University Projects repository, where I showcase the work I've don
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
 -  **Key Learnings**: Introduction to NLP Models.
 
+### BELKA Competition
+- **Description**: This project was a submission for the BELKA competition hosted on Kaggle, where the objective was to predict the binding affinity of a given molecule and protein
+- **Key Learnings**: Parallel Processing, Graph Transformer Convolutional Network, Implementation of Experimental Layer proposed [here](https://arxiv.org/abs/1610.04325)
+
 ### Course-Related Projects
 - **Description**: This folder contains all the required and elective projects I completed during my studies.
 - **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest, Deprecated Library Restoration, Data Imputation.
