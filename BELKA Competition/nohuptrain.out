@@ -1,0 +1,41 @@
+Number of available CPU cores for this task: 176
+Model has been moved to device: cpu
+Number of parameters: 49942185
+Model overview:
+MultiModelGNNBind(
+  (graph_attfp): AttentiveFP(in_channels=14, hidden_channels=512, out_channels=256, edge_dim=10, num_layers=3, num_timesteps=5)
+  (graph_neufp): NeuralFingerprint(14, 256, num_layers=3)
+  (graph_gin): GIN(14, 256, num_layers=3)
+  (protein_encoder): LowRankBilinearPooling(
+    (nonlinearity): ReLU()
+    (proj1): Linear(1562, 1000, bias=False)
+    (proj2): Linear(15599, 1000, bias=False)
+    (proj): Linear(1000, 768, bias=True)
+  )
+  (fc1): LowRankBilinearPooling(
+    (nonlinearity): ReLU()
+    (proj1): Linear(768, 2448, bias=False)
+    (proj2): Linear(768, 2448, bias=False)
+    (proj): Linear(2448, 2048, bias=True)
+  )
+  (fc2): Linear(2048, 1024, bias=True)
+  (fc3): Linear(1024, 256, bias=True)
+  (fc4): Linear(256, 64, bias=True)
+  (fc5): Linear(64, 1, bias=True)
+)
+Data Loaded, columns are correct
+The columns are: Index(['buildingblock1_smiles', 'buildingblock2_smiles',
+       'buildingblock3_smiles', 'molecule_smiles', 'protein_name', 'binds'],
+      dtype='object')
+(20000000, 6) (1589906, 6)
+Protein model has been loaded
+Dask DataFrame has been created
+buildingblock1_smiles    object
+buildingblock2_smiles    object
+buildingblock3_smiles    object
+molecule_smiles          object
+protein_name             object
+binds                     int64
+dtype: object
+Sample DataFrame has been created
+Parallel processing has been started
