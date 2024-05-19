@@ -1,6 +1,6 @@
 # University Projects
 
-Welcome to my University Projects repository, where I showcase the work I've done during my time at Bocconi University. This repository includes various projects developed individually, as part of my coursework, and while participating in student associations like BAINSA (Bocconi Artificial Intelligence and Neuroscience Association), BSDSA (Bocconi Students Data Science Association), and BSML (Bocconi Students for Machine Learning).
+Welcome to my University Projects repository. Here, I showcase the diverse projects undertaken during my time at Bocconi University, developed individually, through coursework, and via my active participation in student associations such as BAINSA (Bocconi Artificial Intelligence and Neuroscience Association), BSDSA (Bocconi Students Data Science Association), and BSML (Bocconi Students for Machine Learning).
 
 ## Projects Overview
 
