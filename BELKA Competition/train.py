@@ -15,7 +15,7 @@ from torch_geometric.loader import DataLoader
 import pickle
 import gc
 import dask
-from torch_geometric.nn import AttentiveFP, GIN, Linear, NeuralFingerprint
+from torch_geometric.nn import AttentiveFP, GIN, Linear, NeuralFingerprint, global_add_pool
 from protein_bert.proteinbert import load_pretrained_model
 from protein_bert.proteinbert.conv_and_global_attention_model import get_model_with_hidden_layers_as_outputs
 from sklearn.metrics import average_precision_score
@@ -28,6 +28,7 @@ import joblib
 
 warnings.filterwarnings("ignore")
 device = torch.device("cpu")
+##Now with "dropout" (although it's not really dropout, it's more like a ratio of nodes to keep)
 
 class LowRankBilinearPooling(torch.nn.Module):
     """
@@ -44,7 +45,8 @@ class LowRankBilinearPooling(torch.nn.Module):
     - x1: Input tensor 1
     - x2: Input tensor 2
     
-    forward() outputs: Low-Rank Bilinear Pooling output tensor (Dimensions: [batch_size, 1] if sum_pool is True, [batch_size, out_channels] if sum_pool is False)
+    forward() outputs:
+    - lrbp: Low-Rank Bilinear Pooling output tensor (Dimensions: [batch_size, 1] if sum_pool is True, [batch_size, out_channels] if sum_pool is False)
     """
     def __init__(self, in_channels1, in_channels2, hidden_dim, out_channels, nonlinearity = torch.nn.ReLU, sum_pool = False):
         super().__init__()
@@ -60,6 +62,8 @@ class LowRankBilinearPooling(torch.nn.Module):
         lrbp = self.proj(x1_.unsqueeze(-2) * x2_.unsqueeze(1))
         return lrbp.sum(dim = (1, 2)) if self.sum_pool else lrbp.squeeze(1)
     
+## Note to self: DimeNet++ could be used instead of TransformerConv, but it's a bit more complex
+## DimeNetPlusPlus(hidden_channels = 256, num_blocks = 3, out_channels = 128, num_spherical = 128, num_radial = 128, int_emb_size = 1024, basis_emb_size = 1024, out_emb_size = 512, output_initializer = 'glorot_orthogonal')
 class MultiModelGNNBind(torch.nn.Module):
     """
     Stacked Meta-Model combining Molecular Fingerprinting and Graph Isomorphism Network for binding affinity prediction
@@ -83,8 +87,8 @@ class MultiModelGNNBind(torch.nn.Module):
         self.graph_neufp = NeuralFingerprint(in_channels = num_node_features, hidden_channels = 512, out_channels = 256, num_layers = 3)  
 
         ##GIN Model
-        self.graph_gin = GIN(in_channels = num_node_features, hidden_channels = 512, num_layers = 3, out_channels = 256, dropout = dropout)
-
+        self.graph_gin = GIN(in_channels = num_node_features, hidden_channels = 512, num_layers = 3, out_channels = 256, dropout = dropout, jk = 'lstm')
+        self.pool = global_add_pool
         ##Protein Encoder
         self.protein_encoder = LowRankBilinearPooling(in_channels1 = 1562, in_channels2 = 15599, hidden_dim = 1000, out_channels = 256 * 3)
 
@@ -94,20 +98,26 @@ class MultiModelGNNBind(torch.nn.Module):
         self.fc3 = Linear(1024, 256, weight_initializer='kaiming_uniform')
         self.fc4 = Linear(256, 64, weight_initializer='kaiming_uniform') 
         self.fc5 = Linear(64, 1, weight_initializer='glorot')
+        self.debug_print = True
 
     def forward(self, data: Data, global_protein_features: torch.Tensor, local_protein_features: torch.Tensor) -> torch.Tensor:        
         ## Molecule layers processing
         x_attfp = self.graph_attfp(data.x, data.edge_index, data.edge_attr, data.batch)
         x_neufp = self.graph_neufp(data.x, data.edge_index, data.batch)
         x_gin = self.graph_gin(data.x, data.edge_index, data.edge_attr, data.batch)
-
+        x_gin = self.pool(x_gin, data.batch)
         ## Encode protein features
         encoded_protein = self.protein_encoder(x1 = global_protein_features, x2 = local_protein_features)
         encoded_protein = F.relu(encoded_protein)
         ##
-
+        if self.debug_print:
+            print("x_attfp shape:", x_attfp.shape)
+            print("x_neufp shape:", x_neufp.shape)
+            print("x_gin shape:", x_gin.shape)
+            print("encoded_protein shape:", encoded_protein.shape)
+            self.debug_print = False
         ## Concatenate all graph features with protein features
-        combined = torch.cat((x_attfp, x_neufp ,x_gin), dim = 1)
+        combined = torch.cat((x_attfp, x_neufp, x_gin), dim = 1)
         ## Pass through dense layers
         combined = F.relu(self.fc1(combined, encoded_protein))
         combined = F.relu(self.fc2(combined))
@@ -222,16 +232,16 @@ def get_bond_features(mol: Chem.Mol) -> List[List[Union[int, float]]]:
         end_atom_idx = bond.GetEndAtomIdx()
         topological_distance = topological_matrix[start_atom_idx][end_atom_idx]
         bond_features.append([
-            bond.GetBondTypeAsDouble(),                                                                                                  ## Bond type (single, double, etc.) as double      (1)
-            bond.GetIsConjugated(),                                                                                                      ## Conjugation, boolean converted to int           (2)
-            bond.GetIsAromatic(),                                                                                                        ## Aromaticity, boolean converted to int           (3)
-            bond.GetStereo(),                                                                                                            ## Stereochemistry of the bond                     (4)
-            is_in_ring,                                                                                                                  ## Is the bond in a ring? Boolean converted to int (5)
-            start_atom_idx,                                                                                                              ## Index of the start atom of the bond             (6)
-            end_atom_idx,                                                                                                                ## Index of the end atom of the bond               (7)
-            ring_size,                                                                                                                   ## Size of the ring that the bond is a part of     (8)
-            topological_distance,                                                                                                        ## Topological distance between bonded atoms       (9)
-            bond.IsInRing() and mol.GetAtomWithIdx(start_atom_idx).GetDegree() > 2 and mol.GetAtomWithIdx(end_atom_idx).GetDegree() > 2  ## Is rotatable, boolean                           (10)
+            bond.GetBondTypeAsDouble(),      ## Bond type (single, double, etc.) as double      (1)
+            bond.GetIsConjugated(),          ## Conjugation, boolean converted to int           (2)
+            bond.GetIsAromatic(),            ## Aromaticity, boolean converted to int           (3)
+            bond.GetStereo(),                ## Stereochemistry of the bond                     (4)
+            is_in_ring,                      ## Is the bond in a ring? Boolean converted to int (5)
+            start_atom_idx,                  ## Index of the start atom of the bond             (6)
+            end_atom_idx,                    ## Index of the end atom of the bond               (7)
+            ring_size,                       ## Size of the ring that the bond is a part of     (8)
+            topological_distance,            ## Topological distance between bonded atoms       (9)
+            bond.IsInRing() and mol.GetAtomWithIdx(start_atom_idx).GetDegree() > 2 and mol.GetAtomWithIdx(end_atom_idx).GetDegree() > 2  ## Is rotatable
         ])
     return bond_features
 
@@ -342,7 +352,7 @@ def train_model(model: torch.nn.Module,
         del all_outputs, all_targets, outputs, loss
         gc.collect()
         torch.cuda.empty_cache()
-        torch.save(model.state_dict(), 'model.pth') ##Save model to be sure something gets out
+        torch.save(model.state_dict(), 'model.pth')
         print('Saved model at epoch: ', epoch+1)
     print('Training complete')
 
@@ -362,7 +372,7 @@ if __name__ == '__main__':
     if not os.path.exists(train_path):
         print("File not found")
         raise FileNotFoundError
-    ##Note: this is basically roughly 1/10 of the available dataset
+    ##Note: for now we're only using 10Million 0s
     con = duckdb.connect()
     df = con.query(f"""(SELECT *
                             FROM parquet_scan('{train_path}')
@@ -406,7 +416,7 @@ if __name__ == '__main__':
     print("Sample DataFrame has been created")
     processed_ddf = ddf.map_partitions(process_and_replace_smiles_columns, meta = sample_df)
     print("Parallel processing has been started")
-    final_df = processed_ddf.compute(scheduler='processes') ##Very memory intensive
+    final_df = processed_ddf.compute(scheduler='processes') 
     ##Check the final DataFrame is a Pandas DataFrame
     assert isinstance(final_df, pd.DataFrame)
     print("Graphs have been processed")
@@ -416,6 +426,7 @@ if __name__ == '__main__':
     uniprot = UniProt()
     print("UniProt Link has been established")
 
+
     train_dataset = MoleculeGraphDataset(train_df, device)
     val_dataset = MoleculeGraphDataset(val_df, device)
     train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, collate_fn=collate_fn)
@@ -424,8 +435,8 @@ if __name__ == '__main__':
     mem = psutil.virtual_memory()
     print(f'Remaining RAM: {mem.available / 1024**3:.2f} GB') ##Diagnostic print
 
+
     criterion = nn.BCELoss() ##Could also be nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     train_model(model, train_loader, val_loader, criterion, optimizer)
-    print("Model has been saved")
-# %%
+    print("Training has finished")
