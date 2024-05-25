@@ -28,7 +28,6 @@ import joblib
 
 warnings.filterwarnings("ignore")
 device = torch.device("cpu")
-##Now with "dropout" (although it's not really dropout, it's more like a ratio of nodes to keep)
 
 class LowRankBilinearPooling(torch.nn.Module):
     """
@@ -62,9 +61,7 @@ class LowRankBilinearPooling(torch.nn.Module):
         lrbp = self.proj(x1_.unsqueeze(-2) * x2_.unsqueeze(1))
         return lrbp.sum(dim = (1, 2)) if self.sum_pool else lrbp.squeeze(1)
     
-## Note to self: DimeNet++ could be used instead of TransformerConv, but it's a bit more complex
-## DimeNetPlusPlus(hidden_channels = 256, num_blocks = 3, out_channels = 128, num_spherical = 128, num_radial = 128, int_emb_size = 1024, basis_emb_size = 1024, out_emb_size = 512, output_initializer = 'glorot_orthogonal')
-class MultiModelGNNBind(torch.nn.Module):
+    class MultiModelGNNBind(torch.nn.Module):
     """
     Stacked Meta-Model combining Molecular Fingerprinting and Graph Isomorphism Network for binding affinity prediction
     Inputs:
@@ -273,7 +270,7 @@ def smiles_to_graph(smiles: str) -> Union[Data, None]:
 def process_and_replace_smiles_columns(df: dd.DataFrame) -> dd.DataFrame:
     column_order = [
         'buildingblock1_smiles', 'buildingblock2_smiles', 'buildingblock3_smiles',
-        'molecule_smiles', 'protein_name', 'binds'
+        'molecule_smiles', 'protein_name'
     ]
     for column in ['molecule_smiles']:
         df[f'{column}_graph'] = df[column].apply(smiles_to_graph)
@@ -293,7 +290,9 @@ if __name__ == '__main__':
     cpu_count = os.cpu_count()
     print("Number of available CPU cores for this task:", cpu_count)
     model = MultiModelGNNBind(num_node_features=14, num_edge_features=10).to(device)
-    print("Model has been moved to device:", device)
+    state_dict = torch.load('model.pth', map_location=device)
+    model.load_state_dict(state_dict)
+    print("Model has been moved to device")
     print("Number of parameters:", sum(p.numel() for p in model.parameters() if p.requires_grad))
     print("Model overview:")
     print(model)
@@ -347,9 +346,6 @@ if __name__ == '__main__':
     print("UniProt Link has been established")
     test_dataset = MoleculeGraphDataset(final_df, device)
     test_loader = DataLoader(test_dataset, batch_size=500, shuffle=False, collate_fn=collate_fn)
-    state_dict = torch.load('model.pth', map_location=device)
-    model.load_state_dict(state_dict)
-    print("Model has been moved to device")
     model.eval()  
     print("Model ready for predictions")
 
@@ -364,7 +360,7 @@ if __name__ == '__main__':
                 mem = psutil.virtual_memory()
                 available_memory_gb = mem.available / (1024 ** 3)
                 print(f"Available RAM: {available_memory_gb:.2f} GB")
-                print(f"Predictions made for {counter * 50000} molecules out of {len(df)}")
+                print(f"Predictions made for {counter * 500} molecules out of {len(df)}")
 
     print("Predictions have been made")
     predictions_df = pd.DataFrame({
