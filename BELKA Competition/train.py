@@ -28,8 +28,6 @@ import joblib
 
 warnings.filterwarnings("ignore")
 device = torch.device("cpu")
-##Now with "dropout" (although it's not really dropout, it's more like a ratio of nodes to keep)
-
 class LowRankBilinearPooling(torch.nn.Module):
     """
     A Low-Rank approximation of the Bilinear pooling operation, as described in https://arxiv.org/abs/1610.04325
@@ -62,8 +60,7 @@ class LowRankBilinearPooling(torch.nn.Module):
         lrbp = self.proj(x1_.unsqueeze(-2) * x2_.unsqueeze(1))
         return lrbp.sum(dim = (1, 2)) if self.sum_pool else lrbp.squeeze(1)
     
-## Note to self: DimeNet++ could be used instead of TransformerConv, but it's a bit more complex
-## DimeNetPlusPlus(hidden_channels = 256, num_blocks = 3, out_channels = 128, num_spherical = 128, num_radial = 128, int_emb_size = 1024, basis_emb_size = 1024, out_emb_size = 512, output_initializer = 'glorot_orthogonal')
+
 class MultiModelGNNBind(torch.nn.Module):
     """
     Stacked Meta-Model combining Molecular Fingerprinting and Graph Isomorphism Network for binding affinity prediction
@@ -294,8 +291,7 @@ def train_model(model: torch.nn.Module,
                 val_loader: DataLoader, 
                 criterion: nn.BCELoss, 
                 optimizer: optim.Optimizer, 
-                num_epochs: int = 10,
-                accum_steps: int = 3):
+                num_epochs: int = 10):
     print("Beginning training")
     for epoch in range(num_epochs):
         model.train()
@@ -317,7 +313,7 @@ def train_model(model: torch.nn.Module,
         epoch_loss = running_loss / len(train_loader.dataset)
         print("Intermediate output: training loss", epoch_loss)
         
-        ## Clear memory after each epoch
+        ## Clear memory after each training epoch
         del outputs, loss
         gc.collect()
         torch.cuda.empty_cache()  
@@ -372,7 +368,7 @@ if __name__ == '__main__':
     if not os.path.exists(train_path):
         print("File not found")
         raise FileNotFoundError
-    ##Note: for now we're only using 10Million 0s
+    ##Note: for now we're only using 20Million 0s
     con = duckdb.connect()
     df = con.query(f"""(SELECT *
                             FROM parquet_scan('{train_path}')
@@ -432,11 +428,7 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, collate_fn=collate_fn)
     val_loader = DataLoader(val_dataset, batch_size=100, shuffle=False, collate_fn=collate_fn)
     print("Data has been loaded into PyTorch DataLoaders")
-    mem = psutil.virtual_memory()
-    print(f'Remaining RAM: {mem.available / 1024**3:.2f} GB') ##Diagnostic print
-
-
     criterion = nn.BCELoss() ##Could also be nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     train_model(model, train_loader, val_loader, criterion, optimizer)
-    print("Training has finished")
+    print("Train.py execution finished")
