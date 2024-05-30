@@ -73,4 +73,8 @@ You can install the required packages using pip:
 pip install pandas numpy torch rdkit bioservices dask scikit-learn torch-geometric psutil joblib duckdb
 ```
 ## Conclusion
+This project has demonstrated the potential of using graph neural networks to predict the binding affinity of small molecule drugs to protein targets. The models achieved a validation accuracy of 0.524 with non-sharing building blocks and 0.982 with sharing ones, which is a promising result.
+
+Given the trends observed during training, there is a strong indication that extending the training to 30 epochs could potentially lead to even higher accuracy. Unfortunately, due to time constraints and hardware limitations, it was not possible to pursue training beyond the current setup during this competition. Future iterations of this project could explore this possibility to fully harness the predictive power of the models developed.
+
 Feel free to explore, learn, and adapt this project to your needs. If you have any questions or suggestions, please feel free to reach out.
