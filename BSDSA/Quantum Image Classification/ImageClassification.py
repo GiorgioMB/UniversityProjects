@@ -1,4 +1,3 @@
-# %% Import necessary libraries
 from qiskit_aer import Aer
 import numpy as np
 from qiskit import QuantumCircuit, transpile
@@ -269,4 +268,3 @@ if __name__ == "__main__":
     print(f"Best Cost for label 0: {cost_0:.4f}")
     print(f"Best Cost for label 1: {cost_1:.4f}")
     plot_and_save_circuits(circuit_0, circuit_1, latex=True)
-# %%
