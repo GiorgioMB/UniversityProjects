@@ -1,10 +1,12 @@
 # Quantum Image Classification Project - BSDSA
-![Circuit Diagram](circuit0_latex.png)
-![Circuit Diagram](circuit1_latex.png)
+
 
 ## Overview
 This repository hosts the project I developed, focusing on the classification of images with vertical and horizontal stripes using quantum computing techniques. 
 The classifier uses a quantum machine learning framework, leveraging quantum circuits to process and classify binary image data effectively. 
+![Best Circuit Diagram](circuit0_latex.png)
+**Figure 1:** Example of an optimized quantum circuit developed in this project.
+
 Specifically, it constructs adaptive quantum feature maps to encode images into quantum states and uses variational quantum circuits to perform the classification. 
 This approach allows for exploiting quantum superposition and entanglement to potentially achieve superior classification performance compared to classical algorithms.
 
@@ -17,6 +19,11 @@ The repository consists of a comprehensive Python script that covers all aspects
   - Building adaptive quantum feature maps and variational circuits.
   - Training quantum circuits to classify the images based on stripe orientation.
   - Evaluating the classifier's performance and optimizing quantum circuit parameters.
+### circuit0.qasm
+The best circuit found from the optimization process for classifying horizontal stripes
+### circuit1.qasm
+The best circuit found from the optimization process for classifying vertical stripes
+
 
 ## Libraries Used
 - Qiskit
