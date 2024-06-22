@@ -1,5 +1,7 @@
 # Quantum Image Classification Project - BSDSA
 ![Circuit Diagram](circuit0_latex.png)
+![Circuit Diagram](circuit1_latex.png)
+
 ## Overview
 This repository hosts the project I developed, focusing on the classification of images with vertical and horizontal stripes using quantum computing techniques. 
 The classifier uses a quantum machine learning framework, leveraging quantum circuits to process and classify binary image data effectively. 
