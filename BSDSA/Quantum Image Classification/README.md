@@ -28,9 +28,9 @@ Before running the script, ensure you have Python and the necessary libraries in
 - Qiskit Algorithms version 0.3.0
 These versions are specified due to the frequent updates and deprecations within the Qiskit framework, which could affect the functionality of the script if newer versions are used.
 
-1 .Download `ImageClassification.py` to your local machine.
+1. Download `ImageClassification.py` to your local machine.
 2. Open your terminal or command promp and navigate to the directory where you have saved the script.
-3.Optional configurations: You can adjust parameters such as the number of qubits, layers, and epochs within the script to explore different configurations.
+3. Optional configurations: You can adjust parameters such as the number of qubits, layers, and epochs within the script to explore different configurations.
 4. Run the script using the following command: ```bash
 python3 ImageClassification.py```
 Be sure to have the recommended versions of the libraries installed to avoid potential issues with deprecated features.
