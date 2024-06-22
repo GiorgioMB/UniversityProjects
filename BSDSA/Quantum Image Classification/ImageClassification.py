@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from qiskit_algorithms.optimizers import COBYLA
 from typing import Tuple
+from qiskit.qasm2 import dumps
+
 
 ## 1. Generate synthetic binary image data
 def generate_data(num_samples: int = 100, size: int = 4) -> Tuple[np.ndarray, np.ndarray]:
@@ -125,8 +127,9 @@ def train_label_circuit(data: np.ndarray, labels: np.ndarray, target_label: int,
     optimizer = COBYLA(maxiter=num_epochs) ## Optimizer
     best_circuit = None ## Best circuit for the target label
     iteration = 0 ## Iteration counter, for verbose mode
+    flag_best = False ## Flag to check if the best circuit has been found
     def objective_function(parameter_values): ## Objective function for optimization
-        nonlocal best_circuit, iteration, var_params
+        nonlocal best_circuit, iteration, var_params, target_label, flag_best
         iteration += 1
         cost = 0
         param_dict = dict(zip(var_params, parameter_values[len(var_params):])) ## Variational circuit parameters
@@ -146,15 +149,19 @@ def train_label_circuit(data: np.ndarray, labels: np.ndarray, target_label: int,
             cost += (hamming_distance * counts[predicted_label]) / sum(counts.values())
             if hamming_distance == 0: ## If the predicted label is all correct, set the best circuit
                 best_circuit = combined_circuit
+                if not flag_best: ## For verbose mode
+                    flag_best = True
+                    if verbose:
+                        print(f"Best circuit found for label {target_label} at iteration {iteration}")
         if verbose and iteration % 10 == 0:
-            print(f"Iteration {iteration}: Cost = {cost / len(data):.4f}")
-        cost /= len(data) ## Normalize cost
+            print(f"Iteration {iteration} for label {target_label}: Cost = {cost / len(data):.4f}")
+        cost /= len(data) ## Normalize cost, as otherwise with more data points, the cost would be higher
         return cost
 
     all_params = np.random.rand(len(var_params) * 2)
     result = optimizer.minimize(fun=objective_function, x0=all_params)
-    optimal_params = result.x
-    value = result.fun
+    optimal_params = result.x ## Optimal parameters
+    value = result.fun ## Cost value
     return best_circuit, optimal_params, value
 
 ## 5. Build the quantum classifier
@@ -183,7 +190,7 @@ def quantum_classifier(data: np.ndarray, labels: np.ndarray, num_layers: int = 2
     while True: ##Continue until a best circuit for both labels is found
         circuit_0, params_0, cost_0 = train_label_circuit(data, labels, target_label=0, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=verbose)
         circuit_1, params_1, cost_1 = train_label_circuit(data, labels, target_label=1, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=verbose)
-        if not (isinstance(circuit_0, type(None)) and isinstance(circuit_1, type(None))): 
+        if not ((isinstance(circuit_0, type(None)) or isinstance(circuit_1, type(None)))): ## Check that best circuits are found for both labels
             break
     if verbose: 
         print(f"Final Training Cost for label 0: {cost_0:.4f}")
@@ -219,14 +226,14 @@ def quantum_classifier(data: np.ndarray, labels: np.ndarray, num_layers: int = 2
     accuracy = sum(1 for x, y in zip(predictions, labels) if x == y) / len(labels)
     average_confidence = np.mean(confidence) 
 
-    if verbose:
+    if verbose: ## Print the best circuits
         print(f"Optimal circuit for label 0:\n", circuit_0.draw())
         print(f"Optimal circuit for label 1:\n", circuit_1.draw())
     
     return params_0, params_1, cost_0, cost_1, accuracy, average_confidence, circuit_0, circuit_1
 
 ## 6. Plot and save the quantum circuits
-def plot_and_save_circuits(circuit_0: QuantumCircuit, circuit_1: QuantumCircuit, latex: bool = False) -> plt.figure:
+def plot_and_save_circuits(circuit_0: QuantumCircuit, circuit_1: QuantumCircuit, latex: bool = False) -> Tuple[str, str]:
     """
     Function to plot and save the quantum circuits
     Arguments:
@@ -236,23 +243,39 @@ def plot_and_save_circuits(circuit_0: QuantumCircuit, circuit_1: QuantumCircuit,
 
     Returns:
     - plt.figure: Visualization of the quantum circuits
+    - qasm_0 (str): QASM code for the quantum circuit for label 0
+    - qasm_1 (str): QASM code for the quantum circuit for label 1
 
     Note: if latex is True, the circuit will also be saved in latex format. Images are saved in the working directory.
     """
+    ## Display the circuit for label 0
     fig = plt.figure(figsize=(10, 7), dpi=500)
     ax = fig.add_subplot(111)
     circuit_0.draw(output='mpl', ax=ax)
     plt.savefig('circuit0.png', format='png', dpi=500)
-    plt.show()
+    plt.show() ## As the circuits are quite large, it's better to display them separately
 
+    ## Display the circuit for label 1
     fig = plt.figure(figsize=(10, 7), dpi=500)
     ax = fig.add_subplot(111)
     circuit_1.draw(output='mpl', ax=ax) 
     plt.savefig('circuit1.png', format='png', dpi=500)
-    plt.show()
-    if latex:
-        circuit_0.draw(output='latex', filename='circuit0_latex.png') ##Latex for formal reports
+    plt.show() 
+
+    if latex: ##Latex for formal reports
+        circuit_0.draw(output='latex', filename='circuit0_latex.png') 
         circuit_1.draw(output='latex', filename='circuit1_latex.png')
+    
+    ## Save the circuits in QASM format for use in the actual quantum computer
+    qasm_0 = dumps(circuit_0)
+    qasm_1 = dumps(circuit_1)
+
+    with open('circuit0.qasm', 'w') as file:
+        file.write(qasm_0)
+    with open('circuit1.qasm', 'w') as file:
+        file.write(qasm_1)
+        
+    return qasm_0, qasm_1
 
 ## Main execution
 if __name__ == "__main__":
