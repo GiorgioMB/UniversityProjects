@@ -11,13 +11,16 @@ Interestingly, even with only a single qubit, after optimization the `adaptive_f
 ![Best Circuit Diagram](circuit0_latex.png)
 **Figure 1:** Example of an optimized quantum circuit developed in this project.
 
-<img src="bloch_multivector_label_0spec.png" alt="State Vector for Label 0" width="300"/>
-
-**Figure 2:** State vector representation for Label 0.
-
-<img src="bloch_multivector_label_1spec.png" alt="State Vector for Label 0" width="300"/>
-
-**Figure 3:** State vector representation for Label 1.
+<div style="display: flex; flex-direction: row; align-items: flex-start;">
+  <div style="margin-right: 20px;">
+    <img src="bloch_multivector_label_0spec.png" alt="State Vector for Label 0" width="300"/>
+    <p><strong>Figure 2:</strong> State vector representation for Label 0.</p>
+  </div>
+  <div>
+    <img src="bloch_multivector_label_1spec.png" alt="State Vector for Label 1" width="300"/>
+    <p><strong>Figure 3:</strong> State vector representation for Label 1.</p>
+  </div>
+</div>
 
 ## Project Structure
 The repository consists of a comprehensive Python script that covers all aspects of the project from data generation to model evaluation:
