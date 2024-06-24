@@ -1,13 +1,17 @@
+#%%
 import numpy as np
 from qiskit import QuantumCircuit, transpile
-from qiskit_aer import AerSimulator
+from qiskit_aer import AerSimulator, StatevectorSimulator
 from qiskit.circuit import ParameterVector
 import matplotlib.pyplot as plt
 import seaborn as sns
 from qiskit_algorithms.optimizers import COBYLA
 from typing import Tuple
 from qiskit.qasm2 import dumps
+from qiskit.quantum_info import Statevector
 from sklearn.model_selection import train_test_split
+from qiskit.visualization import plot_state_city,  plot_state_hinton, plot_state_paulivec, plot_state_qsphere, plot_bloch_multivector
+from sklearn.linear_model import LogisticRegression
 
 ## 1. Generate synthetic binary image data
 def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  noise_level: float = 0.1, noise_type = "uniform") -> Tuple[np.ndarray, np.ndarray]:
@@ -87,9 +91,13 @@ def adaptive_feature_map(data_point: np.ndarray, num_qubits: int) -> Tuple[Quant
     params = ParameterVector('theta', length = num_qubits) ## Parameters for the feature map
     qc = QuantumCircuit(num_qubits) ## Quantum circuit with num_qubits qubits
     qc.h(range(num_qubits)) ## Apply Hadamard gates to all qubits
-    for i in range(num_qubits): ## Apply the feature map
-        angle = params[i] * data_point.flatten()[i] ## Angle for the rotation gate
-        qc.ry(angle, i) ##Apply the RY gate
+    group_size = len(data_point.flatten()) // num_qubits
+    for i in range(num_qubits):
+        start_idx = i * group_size ## Start index for the pixel values
+        end_idx = start_idx + group_size ## End index for the pixel values
+        summed_value = np.sum(data_point.flatten()[start_idx:end_idx]) ## Sum the pixel values
+        angle = (params[i] * summed_value) ## Angle for the rotation gate
+        qc.ry(angle, i) ## Apply the rotation gate
     return qc, params
 
 def layered_variational_circuit(num_qubits: int = 4, num_layers: int = 2) -> Tuple[QuantumCircuit, ParameterVector]:
@@ -111,7 +119,8 @@ def layered_variational_circuit(num_qubits: int = 4, num_layers: int = 2) -> Tup
         for i in range(num_qubits): ## Apply the variational circuit
             qc.rx(params[i], i) ## Add an RX gate with the parameter
         for i in range(num_qubits):
-            qc.cx(i, (i + 1) % num_qubits) ## Add a CNOT gate with the next qubit
+            if num_qubits > 1:
+                qc.cx(i, (i + 1) % num_qubits) ## Add a CNOT gate with the next qubit
     return qc, all_params
 
 ## 4. Train the quantum circuit for a specific label
@@ -225,6 +234,7 @@ def quantum_classifier(data: np.ndarray, labels: np.ndarray, num_layers: int = 2
     predictions = []
     confidence = []
     ## Test the classifier on the data, as it's noiseless, generating test data is not necessary
+    idx = 0
     for data_point in data:
         feature_map_0, feature_map_params_0 = adaptive_feature_map(data_point, num_qubits)
         combined_circuit_0 = feature_map_0.assign_parameters(dict(zip(feature_map_params_0, params_0[:len(feature_map_params_0)]))).compose(circuit_0)
@@ -241,13 +251,14 @@ def quantum_classifier(data: np.ndarray, labels: np.ndarray, num_layers: int = 2
         result_1 = simulator.run(t_qc_1, shots=1024).result()
         counts_1 = result_1.get_counts()
         confidence_1 = counts_1[max(counts_1, key=counts_1.get)] / 1024
-
+        ##Print the predicted string of the circuit0, 1 and the actual label for the data point
         if confidence_0 > confidence_1:
             predictions.append(0)
             confidence.append(confidence_0)
         else:
             predictions.append(1)
             confidence.append(confidence_1)
+        idx += 1
 
     accuracy = sum(1 for x, y in zip(predictions, labels) if x == y) / len(labels)
     average_confidence = np.mean(confidence) 
@@ -258,7 +269,49 @@ def quantum_classifier(data: np.ndarray, labels: np.ndarray, num_layers: int = 2
     
     return params_0, params_1, cost_0, cost_1, accuracy, average_confidence, circuit_0, circuit_1
 
-## 6. Plot and save the quantum circuits
+## 6. Visualize the mapping of the quantum circuits
+def visualize_feature_map_state(data_point: np.ndarray, num_qubits: int = 4, params: np.ndarray = None, save_fig: bool = False, label:int = 0) -> Statevector:
+    """
+    Function to plot the state of the quantum sphere after applying the feature map
+    Arguments:
+    - data_point (np.ndarray): Image data point to classify
+    - num_qubits (int): Number of qubits in the quantum circuit (default: 4)
+    - params (np.ndarray): Parameters for the quantum circuit (default: None)
+    - save_fig (bool): Whether to save the figure (default: False)
+    - label (int): Label for the data point (default: 0)
+
+    Returns:
+    - statevector: Statevector of the quantum circuit
+    """
+    if isinstance(params, type(None)):
+        params = np.random.rand(num_qubits * 2)
+    feature_map, feature_map_params = adaptive_feature_map(data_point, num_qubits)
+    feature_map_params = feature_map_params[:len(params)]
+    param_dict = dict(zip(feature_map_params, params[:len(feature_map_params)]))
+    feature_map = feature_map.assign_parameters(param_dict)
+    
+    t_qc = transpile(feature_map, StatevectorSimulator())
+    result = StatevectorSimulator().run(t_qc).result()
+    statevector = result.get_statevector()
+    state_city = plot_state_city(statevector)
+    if save_fig:
+        state_city.savefig(f'state_city_label_{label}.png', format='png', dpi=500)
+    hinton = plot_state_hinton(statevector)
+    if save_fig:
+        hinton.savefig(f'state_hinton_label_{label}.png', format='png', dpi=500)
+    paulivec = plot_state_paulivec(statevector)
+    if save_fig:
+        paulivec.savefig(f'state_paulivec_label_{label}.png', format='png', dpi=500)
+    qsphere = plot_state_qsphere(statevector)
+    if save_fig:
+        qsphere.savefig(f'state_qsphere_label_{label}.png', format='png', dpi=500)
+    bloch = plot_bloch_multivector(statevector)
+    if save_fig:
+        bloch.savefig(f'bloch_multivector_label_{label}.png', format='png', dpi=500)
+    return statevector
+
+
+## 7. Plot and save the quantum circuits
 def plot_and_save_circuits(circuit_0: QuantumCircuit, circuit_1: QuantumCircuit, latex: bool = False) -> Tuple[str, str]:
     """
     Function to plot and save the quantum circuits
@@ -303,6 +356,36 @@ def plot_and_save_circuits(circuit_0: QuantumCircuit, circuit_1: QuantumCircuit,
 
     return qasm_0, qasm_1
 
+## 8. Train a classical logistic regression model
+def train_logistic_regression(data: np.ndarray, labels: np.ndarray, num_points:int) -> Tuple[np.ndarray, float]:
+    """
+    Function to train a logistic regression model
+    Arguments:
+    - data (np.ndarray): Image data to classify
+    - labels (np.ndarray): Labels corresponding to the image data
+    - num_points (int): Final dimensionality of the data
+
+    Returns:
+    - accuracy (float): Accuracy of the logistic regression model
+    - confidence (float): Confidence of the logistic regression model
+    """
+    transformed_data = data.copy().reshape(len(data), -1)
+    new_data = np.zeros((len(data), num_points))
+    counter = 0
+    for point in transformed_data:
+        new_point = np.zeros(num_points) 
+        for pixel in range(num_points):
+            new_point[pixel] = np.sum(point[pixel*len(point)//num_points:(pixel+1)*len(point)//num_points])
+        new_data[counter] = new_point
+        counter += 1
+    train_data, test_data, train_labels, test_labels = train_test_split(new_data, labels, test_size=0.2, random_state=42)
+    model = LogisticRegression(random_state=42)
+    model.fit(train_data, train_labels)
+    predictions = model.predict(new_data)
+    confidence = np.mean([max(x) for x in model.predict_proba(new_data)])
+    accuracy = sum(1 for x, y in zip(predictions, labels) if x == y) / len(labels)
+    return accuracy, confidence
+
 ## Main execution
 if __name__ == "__main__":
     ## Set seed for reproducibility
@@ -311,15 +394,25 @@ if __name__ == "__main__":
     noise_type = "normal"
     data, labels = generate_data(num_samples=100, size=6, noise = noise, noise_type=noise_type)  ## Smaller size because Aer complains of too many qubits
     visualize_data(data, labels, max_samples=10)
-    num_layers = 6
-    num_qubits = 4
+    num_layers = 8 ##10
+    num_qubits = 4 ##1
     num_epochs = 50
     ##Note, due to the quirks of qiskit's AerSimulator setting a seed renders the circuit significantly less accurate
     ##For this reason, the seed is not set, and the results may vary slightly between runs. Some may fail catastrophically
     ##However, the expected accuracy is around 93-95% (CI of 99%) for this dataset - tested on 300 runs of this code, for noiseless data
+    ##Model confidence is around 32-34% (CI of 99%) for this dataset - tested on 300 runs of this code, for noiseless data
     params_0, params_1, cost_0, cost_1, accuracy, average_confidence, circuit_0, circuit_1 = quantum_classifier(data, labels, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=True)
     print(f"Accuracy: {accuracy * 100:.4f}%")
     print(f"Average confidence: {average_confidence * 100:.4f}%")
     print(f"Best Cost for label 0: {cost_0:.4f}")
     print(f"Best Cost for label 1: {cost_1:.4f}")
+    vec = visualize_feature_map_state(data[0], num_qubits=num_qubits, params=params_0, save_fig=True, label=0)
+    vec = visualize_feature_map_state(data[1], num_qubits=num_qubits, params=params_1, save_fig=True, label=1)
     plot_and_save_circuits(circuit_0, circuit_1, latex=True)
+    num_points = num_qubits
+    print("Training a classical logistic regression model...")
+    accuracy, confidence = train_logistic_regression(data, labels, num_points)
+    print("Logistic Regression Model:")
+    print(f"Accuracy: {accuracy * 100:.4f}%")
+    print(f"Confidence: {confidence * 100:.4f}%")
+# %%
