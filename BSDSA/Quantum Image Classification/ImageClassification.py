@@ -1,4 +1,3 @@
-#%%
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator, StatevectorSimulator
@@ -230,6 +229,7 @@ def quantum_classifier(data: np.ndarray, labels: np.ndarray, num_layers: int = 2
     if verbose: 
         print(f"Final Training Cost for label 0: {cost_0:.4f}")
         print(f"Final Training Cost for label 1: {cost_1:.4f}")
+
     simulator = AerSimulator()
     predictions = []
     confidence = []
@@ -282,6 +282,13 @@ def visualize_feature_map_state(data_point: np.ndarray, num_qubits: int = 4, par
 
     Returns:
     - statevector: Statevector of the quantum circuit
+    Note: The statevector is also plotted (but not showed) in the following representations:
+    - City plot (it shows the probability of each state)
+    - Hinton plot (it shows the real and imaginary parts of the state)
+    - Pauli vector plot (it shows the expectation values of the Pauli operators)
+    - Q-sphere plot (it shows the state in the Bloch sphere)
+    - Bloch vector plot (it shows the state in the Bloch sphere)
+    If save_fig is True, the plots will be saved in the working directory
     """
     if isinstance(params, type(None)):
         params = np.random.rand(num_qubits * 2)
@@ -394,8 +401,8 @@ if __name__ == "__main__":
     noise_type = "normal"
     data, labels = generate_data(num_samples=100, size=6, noise = noise, noise_type=noise_type)  ## Smaller size because Aer complains of too many qubits
     visualize_data(data, labels, max_samples=10)
-    num_layers = 8 ##10
-    num_qubits = 4 ##1
+    num_layers = 8
+    num_qubits = 6
     num_epochs = 50
     ##Note, due to the quirks of qiskit's AerSimulator setting a seed renders the circuit significantly less accurate
     ##For this reason, the seed is not set, and the results may vary slightly between runs. Some may fail catastrophically
@@ -415,4 +422,3 @@ if __name__ == "__main__":
     print("Logistic Regression Model:")
     print(f"Accuracy: {accuracy * 100:.4f}%")
     print(f"Confidence: {confidence * 100:.4f}%")
-# %%
