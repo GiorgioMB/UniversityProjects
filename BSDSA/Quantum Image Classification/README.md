@@ -31,6 +31,8 @@ The repository consists of a comprehensive Python script that covers all aspects
   - Building adaptive quantum feature maps and variational circuits.
   - Training quantum circuits to classify the images based on stripe orientation.
   - Evaluating the classifier's performance and optimizing quantum circuit parameters.
+  - Visualizing and saving the classifier and the encoded qubits
+  - Training a logistic regression on the same data and get accuracy and confidence as a comparison
 ### circuit0.qasm
 The best circuit found from the optimization process for classifying horizontal stripes
 ### circuit1.qasm
