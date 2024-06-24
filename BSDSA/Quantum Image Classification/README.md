@@ -5,7 +5,7 @@
 This repository hosts the project I developed, focusing on the classification of images with vertical and horizontal stripes using quantum computing techniques. 
 The classifier uses a quantum machine learning framework, leveraging quantum circuits to process and classify binary image data effectively. 
 Specifically, it constructs adaptive quantum feature maps to encode images into quantum states and uses variational quantum circuits to perform the classification. 
-This approach allows for exploiting quantum superposition and entanglement to potentially achieve superior classification performance compared to classical algorithms.
+This approach allows for exploiting quantum superposition and entanglement, potentially enabling equivalent classification outcomes with a more compact feature map.
 
 ![Best Circuit Diagram](circuit0_latex.png)
 **Figure 1:** Example of an optimized quantum circuit developed in this project.
