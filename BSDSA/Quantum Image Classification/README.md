@@ -6,10 +6,16 @@ This repository hosts the project I developed, focusing on the classification of
 The classifier uses a quantum machine learning framework, leveraging quantum circuits to process and classify binary image data effectively. 
 Specifically, it constructs adaptive quantum feature maps to encode images into quantum states and uses variational quantum circuits to perform the classification. 
 This approach allows for exploiting quantum superposition and entanglement, potentially enabling equivalent classification outcomes with a more compact feature map.
+Interestingly, even with only a single qubit, after optimization the `adaptive_feature_map` shows promising results. The quantum state representations for the two labels demonstrate that the quantum states are already pointing close to the correct classification: Label 0 (encoded as |0⟩) shows the state vector pointing upwards (Figure 2), and Label 1 (encoded as |1⟩) shows the state vector pointing downwards (Figure 3).
 
 ![Best Circuit Diagram](circuit0_latex.png)
 **Figure 1:** Example of an optimized quantum circuit developed in this project.
 
+![Label0Encoding](bloch_multivector_label_0spec.png)
+**Figure 2:** State vector representation for Label 0.
+
+![Label0Encoding](bloch_multivector_label_1spec.png)
+**Figure 3:** State vector representation for Label 1.
 
 ## Project Structure
 The repository consists of a comprehensive Python script that covers all aspects of the project from data generation to model evaluation:
