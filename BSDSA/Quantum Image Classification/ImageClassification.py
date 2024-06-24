@@ -7,15 +7,18 @@ import seaborn as sns
 from qiskit_algorithms.optimizers import COBYLA
 from typing import Tuple
 from qiskit.qasm2 import dumps
-
+from sklearn.model_selection import train_test_split
 
 ## 1. Generate synthetic binary image data
-def generate_data(num_samples: int = 100, size: int = 4) -> Tuple[np.ndarray, np.ndarray]:
+def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  noise_level: float = 0.1, noise_type = "uniform") -> Tuple[np.ndarray, np.ndarray]:
     """
     Generates synthetic binary image data with horizontal and vertical stripes
     Arguments:
     - num_samples (int): Number of samples to generate (default: 100)
     - size (int): Size of the square image (default: 4)
+    - noise (bool): Whether to add noise to the data (default: False)
+    - noise_level (float): Level of noise to add to the data (default: 0.1)
+    - noise_type (str): Type of noise to add to the data (default: "uniform") - options: "uniform", "normal"
 
     Returns:
     - data (np.ndarray): Generated image data
@@ -23,17 +26,26 @@ def generate_data(num_samples: int = 100, size: int = 4) -> Tuple[np.ndarray, np
 
     Note: Number of stripes is size // 2
     """
-    labels = np.random.randint(2, size = num_samples)
+    if noise_level < 0 or noise_level > 1:
+        raise ValueError("Noise level must be between 0 and 1")
+    if (not noise) and (noise_level != 0.1):
+        print("Warning, noise level was set but noise was not enabled. Data will be generated without noise.")
+    labels = np.random.randint(2, size=num_samples)
     data = np.zeros((num_samples, size, size))
-    for i in range(num_samples):
-        if labels[i] == 0:  ## Horizontal stripes
-            for j in range(size):
-                if j % 2 == 0:
-                    data[i, j, :] = 1
-        else:  ## Vertical stripes
-            for j in range(size):
-                if j % 2 == 0:
-                    data[i, :, j] = 1
+
+    horizontal_indices = np.where(labels == 0)[0]
+    data[horizontal_indices, ::2, :] = 1
+
+    vertical_indices = np.where(labels == 1)[0]
+    data[vertical_indices, :, ::2] = 1
+    
+    if noise: ## Add noise to the data
+       if noise_type == "uniform":
+           noise = np.random.uniform(low = -noise_level, high = noise_level, size = (num_samples, size, size))
+       elif noise_type == "normal":
+           noise = np.random.randn(num_samples, size, size) * noise_level
+       data += noise
+        
     return data, labels
 
 ## 2. Visualize the generated data
@@ -55,7 +67,7 @@ def visualize_data(data: np.ndarray = None, labels: np.ndarray = None, max_sampl
     sns.set_style("white")
     fig, axs = plt.subplots(1, max_samples, figsize = (15, 3))
     for i in range(max_samples):
-        axs[i].imshow(data[i], cmap = 'gray')
+        axs[i].imshow(data[i], cmap = 'grey')
         axs[i].axis('off')
         axs[i].set_title(f"Label: {labels[i]}")
     plt.show()
@@ -187,9 +199,23 @@ def quantum_classifier(data: np.ndarray, labels: np.ndarray, num_layers: int = 2
     - circuit_0 (QuantumCircuit): Best quantum circuit for label 0
     - circuit_1 (QuantumCircuit): Best quantum circuit for label 1
     """
+    circuit_0 = None
+    circuit_1 = None
+    train_data, _, train_labels, _ = train_test_split(data, labels, test_size=0.2, random_state=42)
+    counter = 0
     while True: ##Continue until a best circuit for both labels is found
-        circuit_0, params_0, cost_0 = train_label_circuit(data, labels, target_label=0, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=verbose)
-        circuit_1, params_1, cost_1 = train_label_circuit(data, labels, target_label=1, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=verbose)
+        if verbose and counter > 1: 
+            print("Retraining circuits...")
+            print(f"Attempt {counter}")
+        counter += 1
+        if isinstance(circuit_0, type(None)): ## Check that best circuit is found for label 1
+            circuit_0, params_0, cost_0 = train_label_circuit(train_data, train_labels, target_label=0, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=verbose)
+        else: 
+            if verbose: print("Circuit for label 0 already found, skipping training for label 0")
+        if isinstance(circuit_1, type(None)): ## Check that best circuit is found for label 0
+            circuit_1, params_1, cost_1 = train_label_circuit(train_data, train_labels, target_label=1, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=verbose)
+        else:
+            if verbose: print("Circuit for label 1 already found, skipping training for label 1")
         if not ((isinstance(circuit_0, type(None)) or isinstance(circuit_1, type(None)))): ## Check that best circuits are found for both labels
             break
     if verbose: 
@@ -274,21 +300,23 @@ def plot_and_save_circuits(circuit_0: QuantumCircuit, circuit_1: QuantumCircuit,
         file.write(qasm_0)
     with open('circuit1.qasm', 'w') as file:
         file.write(qasm_1)
-        
+
     return qasm_0, qasm_1
 
 ## Main execution
 if __name__ == "__main__":
     ## Set seed for reproducibility
     np.random.seed(42)
-    data, labels = generate_data(num_samples=100, size=6)  ## Smaller size because Aer complains of too many qubits
+    noise = False
+    noise_type = "normal"
+    data, labels = generate_data(num_samples=100, size=6, noise = noise, noise_type=noise_type)  ## Smaller size because Aer complains of too many qubits
     visualize_data(data, labels, max_samples=10)
     num_layers = 6
-    num_qubits = 4 
+    num_qubits = 4
     num_epochs = 50
     ##Note, due to the quirks of qiskit's AerSimulator setting a seed renders the circuit significantly less accurate
     ##For this reason, the seed is not set, and the results may vary slightly between runs. Some may fail catastrophically
-    ##However, the expected accuracy is around 93-95% (CI of 99%) for this dataset - tested on 300 runs of this code
+    ##However, the expected accuracy is around 93-95% (CI of 99%) for this dataset - tested on 300 runs of this code, for noiseless data
     params_0, params_1, cost_0, cost_1, accuracy, average_confidence, circuit_0, circuit_1 = quantum_classifier(data, labels, num_layers=num_layers, num_qubits=num_qubits, num_epochs=num_epochs, verbose=True)
     print(f"Accuracy: {accuracy * 100:.4f}%")
     print(f"Average confidence: {average_confidence * 100:.4f}%")
