@@ -12,9 +12,11 @@ Interestingly, even with only a single qubit, after optimization the `adaptive_f
 **Figure 1:** Example of an optimized quantum circuit developed in this project.
 
 <img src="bloch_multivector_label_0spec.png" alt="State Vector for Label 0" width="300"/>
+
 **Figure 2:** State vector representation for Label 0.
 
 <img src="bloch_multivector_label_1spec.png" alt="State Vector for Label 0" width="300"/>
+
 **Figure 3:** State vector representation for Label 1.
 
 ## Project Structure
