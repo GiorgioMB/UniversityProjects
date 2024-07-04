@@ -13,6 +13,8 @@ This project includes comprehensive Python scripts that address all critical pha
   - Trains quantum models to classify images and evaluates their performance.
   - Visualizes both the generated data and the performance metrics of quantum models.
   - Includes a classical neural network for performance comparison.
+### Performance
+- **Effectiveness**: Following the configurations outlined in `ImageClassification.py`, the quantum circuit consistently demonstrates performance on par with, or even exceeding, that of a conventional linear layer. This highlights the quantum model's potential as a robust alternative for processing complex image data.
 
 ## Libraries Used
 - PennyLane
