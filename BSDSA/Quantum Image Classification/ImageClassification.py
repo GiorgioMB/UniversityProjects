@@ -157,7 +157,7 @@ def test_classical_model(model, data, labels):
 
 if __name__ == "__main__":
     ##Note if size of the image is changed, the number of qubits must be changed accordingly above in the script to be size**2
-    train_data, train_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.1, noise_type="normal")
+    train_data, train_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.2, noise_type="normal")
     test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="normal")
     visualize_data(train_data, train_labels)
     visualize_data(test_data, test_labels)
