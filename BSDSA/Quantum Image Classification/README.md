@@ -1,66 +1,38 @@
 # Quantum Image Classification Project - BSDSA
-
-
 ## Overview
-This repository hosts the project I developed, focusing on the classification of images with vertical and horizontal stripes using quantum computing techniques. 
-The classifier uses a quantum machine learning framework, leveraging quantum circuits to process and classify binary image data effectively. 
-Specifically, it constructs adaptive quantum feature maps to encode images into quantum states and uses variational quantum circuits to perform the classification. 
-This approach allows for exploiting quantum superposition and entanglement, potentially enabling equivalent classification outcomes with a more compact feature map.
-Interestingly, even with only a single qubit, after optimization the `adaptive_feature_map` shows promising results. The quantum state representations for the two labels demonstrate that the quantum states are already pointing close to the correct classification: Label 0 (encoded as |0⟩) shows the state vector pointing upwards (Figure 2), and Label 1 (encoded as |1⟩) shows the state vector pointing downwards (Figure 3).
-
-![Best Circuit Diagram](circuit0_latex.png)
-**Figure 1:** Example of an optimized quantum circuit developed in this project.
-
-<div style="display: flex; align-items: flex-start;">
-  <div style="margin-right: 20px; text-align: center;">
-    <img src="bloch_multivector_label_0spec.png" alt="State Vector for Label 0" width="300"/>
-    <p><strong>Figure 2:</strong> State vector representation for Label 0.</p>
-  </div>
-  <div style="text-align: center;">
-    <img src="bloch_multivector_label_1spec.png" alt="State Vector for Label 1" width="300"/>
-    <p><strong>Figure 3:</strong> State vector representation for Label 1.</p>
-  </div>
-</div>
+This repository houses a project that explores the application of quantum computing techniques for the classification of binary images with vertical and horizontal stripes. Utilizing quantum circuits, this project aims to process and classify binary image data, demonstrating the potential benefits of quantum superposition and entanglement in achieving effective classification with a compact feature map.
 
 ## Project Structure
-The repository consists of a comprehensive Python script that covers all aspects of the project from data generation to model evaluation:
-### ImageClassification.py
-- **Purpose**: Implementing a quantum classifier to distinguish between horizontal and vertical stripes in binary images.
-- **Key Tasks**:
-  - Generating synthetic binary image data with specified stripe patterns.
-  - Building adaptive quantum feature maps and variational circuits.
-  - Training quantum circuits to classify the images based on stripe orientation.
-  - Evaluating the classifier's performance and optimizing quantum circuit parameters.
-  - Visualizing and saving the classifier and the encoded qubits
-  - Training a logistic regression on the same data and get accuracy and confidence as a comparison
-### circuit0.qasm
-The best circuit found from the optimization process for classifying horizontal stripes
-### circuit1.qasm
-The best circuit found from the optimization process for classifying vertical stripes
+This project includes comprehensive Python scripts that address all critical phases from data generation to model evaluation:
 
+### ImageClassification.py
+- **Purpose**: Implements a quantum classifier to differentiate between horizontal and vertical stripes in binary images.
+- **Key Features**:
+  - Generates synthetic binary image data with designated stripe patterns.
+  - Constructs and utilizes quantum circuits for image data encoding and classification.
+  - Trains quantum models to classify images and evaluates their performance.
+  - Visualizes both the generated data and the performance metrics of quantum models.
+  - Includes a classical neural network for performance comparison.
 
 ## Libraries Used
-- Qiskit
+- PennyLane
 - NumPy
 - Matplotlib
 - Seaborn
+- PyTorch
 
 ## How to Run
-Before running the script, ensure you have Python and the necessary libraries installed. For optimal performance and compatibility, it is recommended to use the following library versions:
-- Qiskit version 1.1.0
-- Qiskit Aer version 0.14.2
-- Qiskit Algorithms version 0.3.0
-These versions are specified due to the frequent updates and deprecations within the Qiskit framework, which could affect the functionality of the script if newer versions are used.
+Before running the script, make sure you have installed Python and the required libraries. Here are the steps:
 
-1. Download `ImageClassification.py` to your local machine.
-2. Open your terminal or command promp and navigate to the directory where you have saved the script.
-3. Optional configurations: You can adjust parameters such as the number of qubits, layers, and epochs within the script to explore different configurations.
-4. Run the script using the following command: ```bash
-python3 ImageClassification.py```
-Be sure to have the recommended versions of the libraries installed to avoid potential issues with deprecated features.
-
+1. Clone or download `ImageClassification.py` to your local machine.
+2. Navigate to the directory where you saved the script via terminal or command prompt.
+3. Adjust script parameters (e.g., number of qubits, image size, epochs) as needed.
+4. Run the script with the following command:
+   ```bash
+   python ImageClassification.py
+   ```
+   
 ## Future Expansions
-In collaboration with the Bocconi Students Data Science Association (BSDSA), we are taking significant steps to advance the capabilities of our quantum image classifier. Our primary goals include:
-- **Technical Enhancement**: We plan to expand the variety of quantum gates used in our variational circuits. Currently, our `layered_variational_circuit` includes only RX gates and CNOT gates. Going forward, we intend to introduce a modular framework that allows for the inclusion of various other types of quantum gates. This will enhance the adaptability of our model, allowing it to better optimize for different types of image classifications and potentially improving accuracy and efficiency.
-- **Deployment on Quantum Hardware**: Transitioning from simulations to real-world applications, we plan to test and refine the classifier using actual quantum hardware. This step will allow us to evaluate the classifier's practical performance and scalability, providing insights into the real-world applicability of quantum algorithms in image classification.
-- **Scholarly Publication**: We aim to formalize our findings and methodologies by writing a comprehensive paper, which will detail the behavior of the quantum classifier and provide a clear explanation of its functionalities. The purpose is to document our approach and findings, which may offer useful insights for others working in similar areas of quantum machine learning.
+In collaboration with the Bocconi Students Data Science Association (BSDSA) we aim to further enhance the capabilities of the quantum image classifier through:
+- Expanding to New Datasets: Applying the developed techniques to different datasets to assess and refine the robustness and utility of our quantum classification approach.
+- Scholarly Publication: Documenting our methodologies and findings in a detailed paper
