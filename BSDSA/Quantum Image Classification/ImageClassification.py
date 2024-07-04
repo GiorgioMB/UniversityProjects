@@ -1,11 +1,11 @@
-#%%
 import pennylane as qml
 from pennylane import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple
 import seaborn as sns
 from pennylane.measurements import ExpectationMP
-
+import torch.nn as nn
+import torch
 
 ## 1. Generate synthetic binary image data
 def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  noise_level: float = 0.1, noise_type = "uniform") -> Tuple[np.ndarray, np.ndarray]:
@@ -127,15 +127,46 @@ def test_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray) ->
     return accuracy
 
 
+def train_classical_model(model, data, labels, epochs=10):
+    """
+    Trains the classical model using the mean squared error loss
+    """
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
+    features = [img.flatten().numpy() for img in data]
+    features = torch.tensor(features, dtype=torch.float32)
+    labels = torch.tensor(labels, dtype=torch.float32)
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        outputs = model(features)
+        loss = criterion(outputs.flatten(), labels)
+        loss.backward()
+        optimizer.step()
+        print(f"Epoch {epoch+1}: Loss = {loss.item()}")
+    return model
+
+def test_classical_model(model, data, labels):
+    """
+    Tests the classical model and returns the accuracy
+    """
+    features = torch.tensor([img.flatten().numpy() for img in data], dtype=torch.float32)
+    outputs = model(features)
+    predictions = torch.sign(outputs).detach().numpy().flatten()
+    accuracy = np.mean([pred != lab for pred, lab in zip(predictions, labels)])
+    return accuracy
 
 if __name__ == "__main__":
     ##Note if size of the image is changed, the number of qubits must be changed accordingly above in the script to be size**2
-    train_data, train_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.1, noise_type="uniform")
-    test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="uniform")
+    train_data, train_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.1, noise_type="normal")
+    test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="normal")
     visualize_data(train_data, train_labels)
     visualize_data(test_data, test_labels)
     params = np.random.random((1, num_qubits))
     epochs = 10
+    classical_model = nn.Linear(16, 1)
+    trained_classical_model = train_classical_model(classical_model, train_data, train_labels, epochs=epochs)
+    accuracy_classical = test_classical_model(trained_classical_model, test_data, test_labels)
+    print(f"Accuracy of the classical model: {accuracy_classical*100:.2f}%")
     ## Training the model
     trained_params = train_quantum_model(train_data, train_labels, params, epochs=epochs)
     ## Testing the model
@@ -143,4 +174,5 @@ if __name__ == "__main__":
     fig, ax = qml.draw_mpl(cost_circuit)(test_data[0].flatten(), params)
     fig.savefig("quantum_circuit.png")
     plt.show()
+    print(f"Number of parameters: {len(trained_params.flatten())}")
     print(f"Accuracy: {accuracy*100:.2f}%")
