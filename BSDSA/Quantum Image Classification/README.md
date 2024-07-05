@@ -1,21 +1,27 @@
 # Quantum Image Classification Project - BSDSA
 ## Overview
-This repository houses a project that explores the application of quantum computing techniques for the classification of binary images with vertical and horizontal stripes. Utilizing quantum circuits, this project aims to process and classify binary image data, demonstrating the potential benefits of quantum superposition and entanglement in achieving effective classification with a compact feature map.
+This repository explores the application of quantum computing techniques for the classification of binary images with vertical and horizontal stripes. Utilizing quantum circuits, this project aims to process and classify binary image data, demonstrating the potential benefits of quantum superposition and entanglement in achieving effective classification with a compact feature map.
 
 ## Project Structure
 This project includes comprehensive Python scripts that address all critical phases from data generation to model evaluation:
 
 ### ImageClassification.py
-- **Purpose**: Implements a quantum classifier to differentiate between horizontal and vertical stripes in binary images.
+- **Purpose**: Implements a quantum classifier to differentiate between horizontal and vertical stripes in noisy binary images.
 - **Key Features**:
   - Generates synthetic binary image data with designated stripe patterns.
   - Constructs and utilizes quantum circuits for image data encoding and classification.
   - Trains quantum models to classify images and evaluates their performance.
   - Visualizes both the generated data and the performance metrics of quantum models.
   - Includes a classical neural network for performance comparison.
-### Performance
 - **Effectiveness**: Following the configurations outlined in `ImageClassification.py`, the quantum circuit consistently demonstrates performance on par with, or even exceeding, that of a conventional linear layer. This highlights the quantum model's potential as a robust alternative for processing complex image data.
 
+### QCNN.py
+- **Purpose**: Explores the potential of quantum neural networks by implementing a hybrid model that combines classical feature extraction with convolutional layers with quantum circuits.
+- **Key Features**:
+  - Trains the hybrid model to classify between images of digits 0 and 1, focusing on binary classification due to limitations in quantum simulation capabilities.
+  - Initial `Conv2d` layers perform classical convolution and pooling, reducing image dimensions while preserving essential features.
+  - Extracted features are then processed through a quantum circuit, leveraging quantum mechanical properties for classification.
+- **Effectiveness**: In the `QCNN.py` script, when initialized with the designated seed, the Parametrized Quantum Circuit (PQC) demonstrates a substantial performance advantage over the traditional linear classifier. Extensive testing, conducted 100 times without a fixed seed, reveals that the PQC maintains a more consistent test accuracy ranging from 60% to 100%. In contrast, the linear classifier exhibits greater variability in performance and less robustness, with accuracies spanning from a minimum of 38% to a maximum of 100%.
 ## Libraries Used
 - PennyLane
 - NumPy
@@ -26,12 +32,12 @@ This project includes comprehensive Python scripts that address all critical pha
 ## How to Run
 Before running the script, make sure you have installed Python and the required libraries. Here are the steps:
 
-1. Clone or download `ImageClassification.py` to your local machine.
+1. Clone or download `ImageClassification.py` or `QCNN.py` to your local machine.
 2. Navigate to the directory where you saved the script via terminal or command prompt.
-3. Adjust script parameters (e.g., number of qubits, image size, epochs) as needed.
+3. Adjust script parameters (e.g., number of qubits, epochs, optimizer) as needed.
 4. Run the script with the following command:
    ```bash
-   python ImageClassification.py
+   python <script_name>.py
    ```
    
 ## Future Expansions
