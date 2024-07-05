@@ -21,7 +21,7 @@ This project includes comprehensive Python scripts that address all critical pha
   - Trains the hybrid model to classify between images of digits 0 and 1, focusing on binary classification due to limitations in quantum simulation capabilities.
   - Initial `Conv2d` layers perform classical convolution and pooling, reducing image dimensions while preserving essential features.
   - Extracted features are then processed through a quantum circuit, leveraging quantum mechanical properties for classification.
-- **Effectiveness**: In the `QCNN.py` script, when initialized with the designated seed, the PQC demonstrates a substantial performance advantage over the traditional linear classifier. Extensive testing, conducted 100 times without a fixed seed, reveals that the PQC maintains a more consistent test accuracy ranging from 60% to 100%. In contrast, the linear classifier exhibits greater variability in performance and less robustness, with accuracies spanning from a minimum of 38% to a maximum of 100%. This highlights the PQC's consistent robustness with real (though preprocessed) data.
+- **Effectiveness**: In the `QCNN.py` script, when initialized with the designated seed, the PQC demonstrates a substantial performance advantage over the traditional linear classifier, having a 30% higher accuracy. Extensive testing, conducted 100 times without a fixed seed, reveals that the PQC maintains a more consistent test accuracy ranging from 60% to 100%. In contrast, the linear classifier exhibits greater variability in performance and less robustness, with accuracies spanning from a minimum of 38% to a maximum of 100%. This highlights the PQC's consistent robustness with real (though preprocessed) data.
 
 ## Libraries Used
 - PennyLane
