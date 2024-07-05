@@ -14,7 +14,7 @@ torch.manual_seed(62101)
 np.random.seed(62101)
 qnp.random.seed(62101)
 
-##Feature extraction through an already trained Convolutional layer
+##Feature extraction with traditional convolutional layers
 class NeuralPreprocessor(nn.Module):
     def __init__(self):
         super(NeuralPreprocessor, self).__init__()
