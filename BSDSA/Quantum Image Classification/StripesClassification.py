@@ -6,7 +6,9 @@ import seaborn as sns
 from pennylane.measurements import ExpectationMP
 import torch.nn as nn
 import torch
-
+torch.manual_seed(62101)
+np.random.seed(62101)
+ 
 ## 1. Generate synthetic binary image data
 def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  noise_level: float = 0.1, noise_type = "uniform") -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -93,14 +95,22 @@ def cost_circuit(features:np.ndarray, params:np.ndarray) -> float:
     return quantum_circuit(features, params)
 
 ## 4. Define the cost function and optimizer
+def sigmoid(x):
+    """
+    Sigmoid activation function: f(x) = 1 / (1 + exp(-x))
+    Maps any real value into the range (0, 1), suitable for binary classification.
+    """
+    return 1 / (1 + np.exp(-x))
+
 def cost_function(params:np.ndarray, features:np.ndarray, labels:np.ndarray) -> float:
     """
-    Mean squared error cost function
+    Binary cross-entropy cost function for classification
     """
     loss = 0.0
     for f, label in zip(features, labels):
-        prediction = cost_circuit(f, params)
-        loss += (label - prediction) ** 2
+        logits = cost_circuit(f, params)  # ensure cost_circuit outputs logits
+        prediction = sigmoid(logits)       # apply sigmoid to convert logits to probabilities
+        loss += -label * np.log(prediction + 1e-9) - (1 - label) * np.log(1 - prediction + 1e-9)  # 1e-9 for numerical stability
     loss = loss / len(features)
     return loss
 
@@ -131,18 +141,18 @@ def train_classical_model(model, data, labels, epochs=10):
     """
     Trains the classical model using the mean squared error loss
     """
-    criterion = nn.MSELoss()
+    criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
     features = [img.flatten().numpy() for img in data]
     features = torch.tensor(features, dtype=torch.float32)
-    labels = torch.tensor(labels, dtype=torch.float32)
+    labels = torch.tensor(labels, dtype=torch.long)
     for epoch in range(epochs):
         optimizer.zero_grad()
         outputs = model(features)
-        loss = criterion(outputs.flatten(), labels)
+        loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        print(f"Epoch {epoch+1}: Loss = {loss.item()}")
+        print(f"Epoch {epoch+1}: Loss = {loss.item() / len(features)}")
     return model
 
 def test_classical_model(model, data, labels):
@@ -152,7 +162,7 @@ def test_classical_model(model, data, labels):
     features = torch.tensor([img.flatten().numpy() for img in data], dtype=torch.float32)
     outputs = model(features)
     predictions = torch.sign(outputs).detach().numpy().flatten()
-    accuracy = np.mean([pred != lab for pred, lab in zip(predictions, labels)])
+    accuracy = np.mean([pred == lab for pred, lab in zip(predictions, labels)])
     return accuracy
 
 if __name__ == "__main__":
@@ -163,16 +173,17 @@ if __name__ == "__main__":
     visualize_data(test_data, test_labels)
     params = np.random.random((1, num_qubits))
     epochs = 10
-    classical_model = nn.Linear(16, 1)
+    classical_model = nn.Sequential(
+        nn.Linear(16, 2),
+        nn.Sigmoid()
+    )
     trained_classical_model = train_classical_model(classical_model, train_data, train_labels, epochs=epochs)
     accuracy_classical = test_classical_model(trained_classical_model, test_data, test_labels)
+    print(f"Number of parameters in the classical model: {sum(p.numel() for p in trained_classical_model.parameters())}")
     print(f"Accuracy of the classical model: {accuracy_classical*100:.2f}%")
     ## Training the model
     trained_params = train_quantum_model(train_data, train_labels, params, epochs=epochs)
     ## Testing the model
     accuracy = test_quantum_model(test_data, test_labels, trained_params)
-    fig, ax = qml.draw_mpl(cost_circuit)(test_data[0].flatten(), params)
-    fig.savefig("quantum_circuit.png")
-    plt.show()
     print(f"Number of parameters: {len(trained_params.flatten())}")
     print(f"Accuracy: {accuracy*100:.2f}%")
