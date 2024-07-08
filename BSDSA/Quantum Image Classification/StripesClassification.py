@@ -147,6 +147,7 @@ def train_classical_model(model, data, labels, epochs=10):
     features = [img.flatten().numpy() for img in data]
     features = torch.tensor(features, dtype=torch.float32)
     labels = torch.tensor(labels, dtype=torch.long)
+    model.train()
     for epoch in range(epochs):
         optimizer.zero_grad()
         outputs = model(features)
@@ -161,8 +162,10 @@ def test_classical_model(model, data, labels):
     Tests the classical model and returns the accuracy
     """
     features = torch.tensor([img.flatten().numpy() for img in data], dtype=torch.float32)
-    outputs = model(features)
-    predictions = torch.sign(outputs).detach().numpy().flatten()
+    model.eval()
+    with torch.no_grad():
+        outputs = model(features)
+        predictions = torch.sign(outputs).detach().numpy().flatten()
     accuracy = np.mean([pred == lab for pred, lab in zip(predictions, labels)])
     return accuracy
 
@@ -170,7 +173,7 @@ def test_classical_model(model, data, labels):
 if __name__ == "__main__":
     ##Note if size of the image is changed, the number of qubits must be changed accordingly above in the script to be 2log2(size)
     train_data, train_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.2, noise_type="normal")
-    test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="normal")
+    test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="uniform")
     visualize_data(train_data, train_labels)
     visualize_data(test_data, test_labels)
     num_layers = 2
