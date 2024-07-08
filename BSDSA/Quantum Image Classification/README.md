@@ -33,7 +33,7 @@ This project includes comprehensive Python scripts that address all critical pha
 ## How to Run
 Before running the script, make sure you have installed Python and the required libraries. Here are the steps:
 
-1. Clone or download `ImageClassification.py` or `QCNN.py` to your local machine.
+1. Clone or download `StripesClassification.py` or `DigitClassification.py` to your local machine.
 2. Navigate to the directory where you saved the script via terminal or command prompt.
 3. Adjust script parameters (e.g., number of qubits, epochs, optimizer) as needed.
 4. Run the script with the following command:
