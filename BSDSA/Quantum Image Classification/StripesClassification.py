@@ -84,7 +84,7 @@ def quantum_circuit(features:np.ndarray, params:np.ndarray) -> ExpectationMP:
     Returns the expectation value of the Pauli-Z operator on the first qubit
     """
     qml.AmplitudeEmbedding(features, wires=range(num_qubits), normalize=True)
-    qml.templates.BasicEntanglerLayers(params, wires=range(num_qubits))
+    qml.StronglyEntanglingLayers(params, wires=range(num_qubits))
     return qml.expval(qml.PauliZ(0))
 
 @qml.qnode(dev)
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     visualize_data(train_data, train_labels)
     visualize_data(test_data, test_labels)
     num_layers = 2
-    params = np.random.random((num_layers, num_qubits))
+    params = np.random.random((num_layers, num_qubits, 3))
     epochs = 10
     classical_model = nn.Sequential(
         nn.Linear(16, 2),
