@@ -39,9 +39,9 @@ Before running the script, make sure you have installed Python and the required 
   - Scikit-learn = 1.5.0
   - numpy = 1.26.4
   You can install or upgrade these libraries using the command:
-```bash
-pip install pennylane==0.36.0 torch==2.3.1 scikit-learn==1.5.0 numpy==1.26.4
-```
+  ```bash
+  pip install pennylane==0.36.0 torch==2.3.1 scikit-learn==1.5.0 numpy==1.26.4
+  ```
 
 2. Clone or download `StripesClassification.py` or `DigitClassification.py` to your local machine.
 3. Navigate to the directory where you saved the script via terminal or command prompt.
