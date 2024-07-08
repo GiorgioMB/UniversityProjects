@@ -173,9 +173,10 @@ def test_classical_model(model, data, labels):
 if __name__ == "__main__":
     ##Note if size of the image is changed, the number of qubits must be changed accordingly above in the script to be 2log2(size)
     train_data, train_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.2, noise_type="normal")
-    test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="uniform")
+    test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="normal")
     visualize_data(train_data, train_labels)
     visualize_data(test_data, test_labels)
+    save_image = True
     num_layers = 2
     params = np.random.random((num_layers, num_qubits, 3))
     epochs = 10
@@ -193,3 +194,9 @@ if __name__ == "__main__":
     accuracy = test_quantum_model(test_data, test_labels, trained_params)
     print(f"Number of parameters: {len(trained_params.flatten())}")
     print(f"Accuracy: {accuracy*100:.2f}%")
+
+    ## Visualizing the quantum circuit and saving the image
+    fig, ax = qml.draw_mpl(cost_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(train_data[0].flatten(), trained_params)
+    if save_image:
+        fig.savefig("Circuit Stripes.png", dpi = 600)
+    plt.show()
