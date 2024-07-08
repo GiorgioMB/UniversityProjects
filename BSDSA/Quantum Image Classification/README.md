@@ -32,6 +32,7 @@ This project includes comprehensive Python scripts that address all critical pha
 
 ## How to Run
 Before running the script, make sure you have installed Python and the required libraries. Here are the steps:
+
 0. Ensure the following specific versions of the libraries are installed:
   - Pennylane == 0.36.0
   - Torch == 2.3.1
