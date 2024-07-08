@@ -77,13 +77,13 @@ def visualize_data(data: np.ndarray = None, labels: np.ndarray = None, max_sampl
     return fig
 
 ## 3. Define the quantum circuit
-num_qubits = 16
+num_qubits = 4
 dev = qml.device("default.qubit", wires=num_qubits)
 def quantum_circuit(features:np.ndarray, params:np.ndarray) -> ExpectationMP:
     """
     Returns the expectation value of the Pauli-Z operator on the first qubit
     """
-    qml.templates.AngleEmbedding(features, wires=range(num_qubits))
+    qml.AmplitudeEmbedding(features, wires=range(num_qubits), normalize=True)
     qml.templates.BasicEntanglerLayers(params, wires=range(num_qubits))
     return qml.expval(qml.PauliZ(0))
 
@@ -137,6 +137,7 @@ def test_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray) ->
     return accuracy
 
 
+## 6. Define training and testing functions for the classical model
 def train_classical_model(model, data, labels, epochs=10):
     """
     Trains the classical model using the mean squared error loss
@@ -165,13 +166,15 @@ def test_classical_model(model, data, labels):
     accuracy = np.mean([pred == lab for pred, lab in zip(predictions, labels)])
     return accuracy
 
+
 if __name__ == "__main__":
-    ##Note if size of the image is changed, the number of qubits must be changed accordingly above in the script to be size**2
+    ##Note if size of the image is changed, the number of qubits must be changed accordingly above in the script to be 2log2(size)
     train_data, train_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.2, noise_type="normal")
     test_data, test_labels = generate_data(num_samples=20, size=4, noise=True, noise_level=0.1, noise_type="normal")
     visualize_data(train_data, train_labels)
     visualize_data(test_data, test_labels)
-    params = np.random.random((1, num_qubits))
+    num_layers = 2
+    params = np.random.random((num_layers, num_qubits))
     epochs = 10
     classical_model = nn.Sequential(
         nn.Linear(16, 2),
