@@ -13,7 +13,7 @@ This project includes comprehensive Python scripts that address all critical pha
   - Trains quantum models to classify images and evaluates their performance.
   - Visualizes both the generated data and the performance metrics of quantum models.
   - Includes a classical neural network for performance comparison.
-- **Effectiveness**: Following the configurations outlined in `ImageClassification.py`, the Parametrized Quantum Circuit (PQC) outperforms the linear classifier by a margin of 20%. Testing without a fixed seed for 100 times revealed that the PQC had consistently performance on par with, or even exceeding, that of a conventional linear classifier. This underscores the PQC's viability as a strong alternative for handling complex, manually generated image data.
+- **Effectiveness**: Following the configurations outlined in `StripesClassification.py`, the Parametrized Quantum Circuit (PQC) outperforms the linear classifier by a margin of 15%. Testing without a fixed seed for 100 times revealed that the PQC had consistently performance close with, or even exceeding, that of a conventional linear classifier. 
 
 ### DigitClassification.py
 - **Purpose**: Explores the potential of quantum neural networks by implementing a hybrid model that combines classical feature extraction with convolutional layers with quantum circuits.
@@ -21,7 +21,7 @@ This project includes comprehensive Python scripts that address all critical pha
   - Trains the hybrid model to classify between images of digits 0 and 1, focusing on binary classification due to limitations in quantum simulation capabilities.
   - Initial `Conv2d` layers perform classical convolution and pooling, reducing image dimensions while preserving essential features.
   - Extracted features are then processed through a quantum circuit, leveraging quantum mechanical properties for classification.
-- **Effectiveness**: In the `QCNN.py` script, when initialized with the designated seed, the PQC demonstrates a substantial performance advantage over the traditional linear classifier, having a 30% higher accuracy. Extensive testing, conducted 100 times without a fixed seed, reveals that the PQC maintains a more consistent test accuracy ranging from 60% to 100%. In contrast, the linear classifier exhibits greater variability in performance and less robustness, with accuracies spanning from a minimum of 38% to a maximum of 100%. This highlights the PQC's consistent robustness with real (though preprocessed) data.
+- **Effectiveness**: In the `DigitClassification.py` script, when initialized with the designated seed, the PQC demonstrates a substantial performance advantage over the traditional linear classifier, having a 46% higher accuracy. Extensive testing, conducted 100 times without a fixed seed, reveals that the PQC maintains a more consistent test accuracy ranging from 60% to 100%. In contrast, the linear classifier exhibits greater variability in performance and less robustness, with accuracies spanning from a minimum of 38% to a maximum of 100%. This example proves that PQCs can effectively replace a linear layer even when the data is processed through classical machine learning layers, showcasing their versatility and robustness in diverse machine learning pipelines.
 
 ## Libraries Used
 - PennyLane
