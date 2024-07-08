@@ -155,3 +155,8 @@ with torch.no_grad():
     accuracy = torch.mean((predictions == y_tensor).float())
     print(f"Accuracy of the Neural Network: {accuracy}")
 print(f"Number of parameters in the classical model: {sum(p.numel() for p in classical_model.parameters())}")
+
+##Visualizing the quantum circuit
+fig, ax = qml.draw_mpl(cost_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(qdata[0], qparams)
+fig.savefig("Circuit Digits.png", dpi = 600)
+plt.show()
