@@ -13,8 +13,7 @@ from sklearn.model_selection import train_test_split
 torch.manual_seed(62101)
 np.random.seed(62101)
 qnp.random.seed(62101)
-
-##Feature extraction with traditional convolutional layers
+ 
 class NeuralPreprocessor(nn.Module):
     def __init__(self):
         super(NeuralPreprocessor, self).__init__()
@@ -32,21 +31,21 @@ class NeuralPreprocessor(nn.Module):
         x = F.relu(self.conv2(x))  
         x = x.view(-1, 16)         
         self.cout = x
+
         x = self.lin1(x)
         return self.sigmoid(x)
 
-##Simply take 0s and 1s, as multiclass is beyond the scope of what
-##Pennylane's simulation can handle
+
 digits = load_digits()
 X = digits.data
 y = digits.target
 valid = (y == 0) | (y == 1)
 X = X[valid]
 y = y[valid]
-##Convert to Tensor
+
 X_tensor = torch.tensor(X, dtype=torch.float32).reshape(-1, 1, 8, 8)
 y_tensor = torch.tensor(y, dtype=torch.long)
-##Call model and extract features
+
 model = NeuralPreprocessor()
 epochs_train = 50
 optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
@@ -59,17 +58,17 @@ for epoch in range(epochs_train):
     loss.backward()
     optimizer.step()
     new_X = model.cout.detach().numpy()
-print("Convolutional Features Retrieved, Training QML Model...")
 
-##Set up the quantum circuit
-num_qubits = 16
+
+print("Convolutional Features Retrieved, Training QML Model...")
+num_qubits = int(np.log2(new_X.shape[1]))
 dev = qml.device("default.qubit", wires=num_qubits)
 def quantum_circuit(features:np.ndarray, params:np.ndarray) -> ExpectationMP:
     """
     Returns the expectation value of the Pauli-Z operator on the first qubit
     """
-    qml.templates.AngleEmbedding(features, wires=range(num_qubits))
-    qml.templates.BasicEntanglerLayers(params, wires=range(num_qubits))
+    qml.AmplitudeEmbedding(features, wires=range(num_qubits), normalize = True)
+    qml.StronglyEntanglingLayers(params, wires=range(num_qubits))
     return qml.expval(qml.PauliZ(0))
 
 @qml.qnode(dev)
@@ -79,7 +78,7 @@ def cost_circuit(features:np.ndarray, params:np.ndarray) -> float:
     """
     return quantum_circuit(features, params)
 
-## Cost function and optimizer
+## 4. Define the cost function and optimizer
 def sigmoid(x):
     """
     Sigmoid activation function: f(x) = 1 / (1 + exp(-x))
@@ -101,7 +100,7 @@ def cost_function(params:np.ndarray, features:np.ndarray, labels:np.ndarray) -> 
 
 optimizer = qml.GradientDescentOptimizer(stepsize=0.2) ## Gradient descent optimizer
 
-## Training and testing functions
+## 5. Define the training and testing functions
 def train_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, epochs=10) -> np.ndarray:
     """
     Trains the quantum model using the cost function and optimizer
@@ -118,25 +117,21 @@ def test_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray) ->
     Tests the quantum model and returns the accuracy
     """
     features = [img.flatten() for img in data]
-    predictions = [cost_circuit(f, params) for f in features]
+    predictions = [cost_circuit(f, params) for f in features] ##Raw logits predicted by the quantum circuit
     accuracy = np.mean([(np.sign(pred) != lab) for pred, lab in zip(predictions, labels)])
     return accuracy
 
-##Convert the data to Pennylane numpy format
 qdata = qnp.array(new_X)
 qlabels = qnp.array(y)
 qdata_train, qdata_test, qlabels_train, qlabels_test = train_test_split(qdata, qlabels, test_size=0.2, random_state=62101)
-
-##Set up the paramters as random uniform as a starting position
-qparams = qnp.random.uniform(0, np.pi, (1,num_qubits))
-
-##Get optimized parameters
+num_layers = 2
+qparams = qnp.random.uniform(0, np.pi, (num_layers,num_qubits, 3))
 qparams = train_quantum_model(qdata_train, qlabels_train, qparams, epochs=10)
 print("Quantum Model Trained, Testing...")
 accuracy = test_quantum_model(qdata_test, qlabels_test, qparams)
 print(f"Accuracy of the Parametrized Quantum Circuit: {accuracy}")
+print(f"Number of parameters in the quantum model: {len(qparams.flatten())}")
 
-##Train a simple Linear layer on the same data with sigmoid activation
 new_X_tensor = torch.tensor(new_X, dtype=torch.float32)
 X_classic_train, X_classic_test, y_classic_train, y_classic_test = train_test_split(new_X_tensor, y_tensor, test_size=0.2, random_state=62101)
 classical_model = nn.Sequential(
@@ -161,4 +156,4 @@ with torch.no_grad():
     predictions = torch.argmax(outputs, dim=1)
     accuracy = torch.mean((predictions == y_tensor).float())
     print(f"Accuracy of the Neural Network: {accuracy}")
-
+print(f"Number of parameters in the classical model: {sum(p.numel() for p in classical_model.parameters())}")
