@@ -33,7 +33,7 @@ This project includes comprehensive Python scripts that address all critical pha
 ## How to Run
 Before running the script, make sure you have installed Python and the required libraries. Here are the steps:
 
-0. Ensure the following specific versions of the libraries are installed:
+  1. Ensure the following specific versions of the libraries are installed:
   - Pennylane == 0.36.0
   - Torch == 2.3.1
   - Scikit-learn = 1.5.0
@@ -43,10 +43,10 @@ Before running the script, make sure you have installed Python and the required 
 pip install pennylane==0.36.0 torch==2.3.1 scikit-learn==1.5.0 numpy==1.26.4
 ```
 
-1. Clone or download `StripesClassification.py` or `DigitClassification.py` to your local machine.
-2. Navigate to the directory where you saved the script via terminal or command prompt.
-3. Adjust script parameters (e.g. epochs, optimizer, etc.) as needed.
-4. Run the script with the following command:
+2. Clone or download `StripesClassification.py` or `DigitClassification.py` to your local machine.
+3. Navigate to the directory where you saved the script via terminal or command prompt.
+4. Adjust script parameters (e.g. epochs, optimizer, etc.) as needed.
+5. Run the script with the following command:
    ```bash
    python <script_name>.py
    ```
