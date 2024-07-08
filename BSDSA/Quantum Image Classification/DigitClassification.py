@@ -1,10 +1,8 @@
 from sklearn.datasets import load_digits
-from skimage.transform import resize
 import numpy as np
 from pennylane import numpy as qnp
 from pennylane.measurements import ExpectationMP
 import matplotlib.pyplot as plt
-import seaborn as sns
 from torch import nn
 import pennylane as qml
 import torch
