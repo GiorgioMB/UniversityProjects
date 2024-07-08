@@ -13,7 +13,7 @@ This project includes comprehensive Python scripts that address all critical pha
   - Trains quantum models to classify images and evaluates their performance.
   - Visualizes both the generated data and the performance metrics of quantum models.
   - Includes a classical neural network for performance comparison.
-- **Effectiveness**: Following the configurations outlined in `StripesClassification.py`, the Parametrized Quantum Circuit (PQC) outperforms the linear classifier by a margin of 15%. Testing without a fixed seed for 100 times revealed that the PQC had consistently performance close with, or even exceeding, that of a conventional linear classifier. 
+- **Effectiveness**: Following the configurations outlined in `StripesClassification.py`, the Parametrized Quantum Circuit (PQC) outperforms the linear classifier by a margin of 45%. Testing without a fixed seed for 100 times revealed that the PQC had consistently performance close with, or even exceeding, that of a conventional linear classifier. 
 
 ### DigitClassification.py
 - **Purpose**: Explores the potential of quantum neural networks by implementing a hybrid model that combines classical feature extraction with convolutional layers with quantum circuits.
