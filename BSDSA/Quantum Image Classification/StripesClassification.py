@@ -79,20 +79,28 @@ def visualize_data(data: np.ndarray = None, labels: np.ndarray = None, max_sampl
 ## 3. Define the quantum circuit
 num_qubits = 4
 dev = qml.device("default.qubit", wires=num_qubits)
-def quantum_circuit(features:np.ndarray, params:np.ndarray) -> ExpectationMP:
+def quantum_circuit(features:np.ndarray, params:np.ndarray, qubit_to_sample: int) -> ExpectationMP:
     """
     Returns the expectation value of the Pauli-Z operator on the first qubit
+    - features (np.ndarray): Input features to the quantum circuit
+    - params (np.ndarray): Parameters of the quantum circuit
+    - qubit_to_sample (int): Qubit to sample from the quantum circuit
     """
+    if qubit_to_sample >= num_qubits:
+        raise ValueError("The qubit to sample must be less than the number of qubits")
     qml.AmplitudeEmbedding(features, wires=range(num_qubits), normalize=True)
     qml.StronglyEntanglingLayers(params, wires=range(num_qubits))
-    return qml.expval(qml.PauliZ(0))
+    return qml.expval(qml.PauliZ(qubit_to_sample))
 
 @qml.qnode(dev)
 def cost_circuit(features:np.ndarray, params:np.ndarray) -> float:
     """
     Executes the quantum circuit and returns the expectation value of the Pauli-Z operator on the first qubit
     """
-    return quantum_circuit(features, params)
+    qubit_to_sample = np.random.randint(num_qubits)
+    ##Uncomment the line below to see the qubit being sampled
+    ##print(f"Sampling for qubit: {qubit_to_sample + 1}")
+    return quantum_circuit(features, params, qubit_to_sample)
 
 ## 4. Define the cost function and optimizer
 def sigmoid(x):
@@ -196,6 +204,7 @@ if __name__ == "__main__":
     print(f"Accuracy: {accuracy*100:.2f}%")
 
     ## Visualizing the quantum circuit and saving the image
+    plt.rcParams.update({'font.size': 12, 'font.family': 'serif'})
     fig, ax = qml.draw_mpl(cost_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(train_data[0].flatten(), trained_params)
     if save_image:
         fig.savefig("Circuit Stripes.png", dpi = 600)
