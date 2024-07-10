@@ -51,8 +51,8 @@ Before running the script, make sure you have installed Python and the required 
   1. Ensure the following specific versions of the libraries are installed:
   - Pennylane == 0.36.0
   - Torch == 2.3.1
-  - Scikit-learn = 1.5.0
-  - numpy = 1.26.4
+  - Scikit-learn == 1.5.0
+  - numpy == 1.26.4
     
     You can install or upgrade these libraries using the command:
   ```bash
