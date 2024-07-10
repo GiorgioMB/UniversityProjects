@@ -314,7 +314,7 @@ if __name__ == "__main__":
     plt.rcParams.update({'font.size': 12, 'font.family': 'serif'})
     fig, ax = qml.draw_mpl(cost_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(train_data[0].flatten(), trained_params, testing = True)
     if save_image:
-        fig.savefig("Circuit Stripes.png", dpi = 600)
+        fig.savefig("CircuitStripes.png", dpi = 600)
     plt.show()
 
     ## Generating adversarial examples
