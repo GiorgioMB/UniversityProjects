@@ -1,9 +1,9 @@
 # Quantum Circuit Classification Project - BSDSA
 ## Overview
-This repository explores the application of quantum computing techniques for various classification problems. Utilizing quantum circuits, this project aims to process and classify binary image data, demonstrating the potential benefits of quantum superposition and entanglement in achieving effective classification with a compact feature map.
+This repository explores the application of quantum computing techniques for various binary classification problems. Utilizing quantum circuits, this project aims to process and classify binary image data, demonstrating the potential benefits of quantum superposition and entanglement in achieving effective classification with a compact feature map.
 
 ## Project Structure
-This project includes comprehensive Python scripts that address all critical phases from data generation to model evaluation:
+This project includes comprehensive Python scripts that address the behaviour and performance of quantum circuits under different circumstances:
 
 ### StripesClassification.py
 - **Purpose**: Implements a quantum classifier to differentiate between horizontal and vertical stripes in noisy binary images.
@@ -38,6 +38,22 @@ This project includes comprehensive Python scripts that address all critical pha
 **Figure 2**: The Optimized Ansatz for This Problem
 ![Optimized Ansatz](CircuitDigits.png)
 
+### IrisClassification.py
+- **Purpose**: Implements a PQC to classify the Iris flower dataset, specifically designed to distinguish between two of the three species.
+- **Key Features**:
+  - Preprocesses the Iris dataset by removing one species to simplify it into a binary classification task.
+  - Implements both a quantum circuit and a classical neural network to perform the classification.
+  - Trains, tests, and compares the performance of quantum and classical models under various conditions, including handling adversarial examples.
+  - Evaluates the effectiveness of random versus deterministic sampling methods in quantum circuits during testing. 
+- **Effectiveness**: 
+  - The quantum model exhibited performance similar, or superior, to a model with 10 times the parameters and trained for 5 times the number of epochs
+  - The quantum model is severely prone to overfitting if more epochs/layers are used
+  - Comparative testing, performed 100 times without a fixed seed, indicates that the quantum model frequently matches or exceeds the performance of the classical model, particularly under adversarial conditions.
+  - Introducing randomness in the qubit sampling during the training phase of the quantum model reduces variance in its accuracy, albeit the mean and median accuracy were sligthly slower when run 100 times without seed setting.
+  - Introducing randomness in the qubit sampling during the testing phase of the quantum model reduces variance in its accuracy under adversarial conditions and marginally improves accuracy.
+
+**Figure 3**: The Optimized Ansatz for This Problem
+![Optimized Ansatz](CircuitIris.png)
 ## Libraries Used
 - PennyLane
 - NumPy
