@@ -277,3 +277,7 @@ accuracy_quantum_random = test_quantum_model(adversarial_example_quantum, y_test
 print("-----------------------------------")
 print(f"Accuracy of the Quantum Model on the Adversarial Example: {accuracy_quantum_random*100:.2f}% (Random Qubit Sampling)")
 print(f"Difference in accuracy between random and deterministic sampling: {abs(accuracy_quantum_adv - accuracy_quantum_random)*100:.2f}%\nIs random sampling better? {accuracy_quantum_random >= accuracy_quantum_adv}\nIs random sampling better than the classical model? {accuracy_quantum_random >= accuracy_classic_adv}")
+plt.rcParams.update({'font.size': 12, 'font.family': 'serif'})
+fig, ax = qml.draw_mpl(draw_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(X_train[0], params)
+fig.savefig("CircuitIris.png", dpi = 600)
+plt.show()
