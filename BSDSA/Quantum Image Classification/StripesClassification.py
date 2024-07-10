@@ -81,7 +81,7 @@ num_qubits = 4
 dev = qml.device("default.qubit", wires=num_qubits)
 def quantum_circuit(features:np.ndarray, params:np.ndarray, qubit_to_sample: int) -> ExpectationMP:
     """
-    Returns the expectation value of the Pauli-Z operator on the first qubit
+    Returns the expectation value of the Pauli-Z operator on the qubit specified by qubit_to_sample
     - features (np.ndarray): Input features to the quantum circuit
     - params (np.ndarray): Parameters of the quantum circuit
     - qubit_to_sample (int): Qubit to sample from the quantum circuit
@@ -95,7 +95,7 @@ def quantum_circuit(features:np.ndarray, params:np.ndarray, qubit_to_sample: int
 @qml.qnode(dev)
 def cost_circuit(features:np.ndarray, params:np.ndarray, testing:bool = False) -> float:
     """
-    Executes the quantum circuit and returns the expectation value of the Pauli-Z operator on the first qubit
+    Executes the quantum circuit and returns the expectation value of the Pauli-Z operator on the first qubit or a random qubit, depending on the testing parameter
     
     Arguments:
     - features (np.ndarray): Input features to the quantum circuit
@@ -106,6 +106,18 @@ def cost_circuit(features:np.ndarray, params:np.ndarray, testing:bool = False) -
     else: qubit_to_sample = np.random.randint(num_qubits)
     ##Uncomment the line below to see the qubit being sampled
     ##print(f"Sampling for qubit: {qubit_to_sample + 1}")
+    return quantum_circuit(features, params, qubit_to_sample)
+
+@qml.qnode(dev)
+def draw_circuit(features:np.ndarray, params:np.ndarray) -> float:
+    """
+    Executes the quantum circuit and returns the expectation value of the Pauli-Z operator on the first qubit, for visualization purposes
+    
+    Arguments:
+    - features (np.ndarray): Input features to the quantum circuit
+    - params (np.ndarray): Parameters of the quantum circuit
+    """
+    qubit_to_sample = 0
     return quantum_circuit(features, params, qubit_to_sample)
 
 ## 4. Define the cost function and optimizer
@@ -314,7 +326,7 @@ if __name__ == "__main__":
     plt.rcParams.update({'font.size': 12, 'font.family': 'serif'})
     fig, ax = qml.draw_mpl(cost_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(train_data[0].flatten(), trained_params, testing = True)
     if save_image:
-        fig.savefig("CircuitStripes.png", dpi = 600)
+        fig.savefig("CircuitStripe.png", dpi = 600)
     plt.show()
 
     ## Generating adversarial examples
