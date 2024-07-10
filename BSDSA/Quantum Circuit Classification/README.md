@@ -1,6 +1,6 @@
-# Quantum Image Classification Project - BSDSA
+# Quantum Circuit Classification Project - BSDSA
 ## Overview
-This repository explores the application of quantum computing techniques for the classification of binary images with vertical and horizontal stripes. Utilizing quantum circuits, this project aims to process and classify binary image data, demonstrating the potential benefits of quantum superposition and entanglement in achieving effective classification with a compact feature map.
+This repository explores the application of quantum computing techniques for various classification problems. Utilizing quantum circuits, this project aims to process and classify binary image data, demonstrating the potential benefits of quantum superposition and entanglement in achieving effective classification with a compact feature map.
 
 ## Project Structure
 This project includes comprehensive Python scripts that address all critical phases from data generation to model evaluation:
