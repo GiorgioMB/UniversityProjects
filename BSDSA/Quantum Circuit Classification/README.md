@@ -12,12 +12,12 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Constructs and utilizes quantum circuits for image data encoding and classification.
   - Trains quantum models to classify images and evaluates their performance.
   - Visualizes both the generated data and the performance metrics of quantum models.
-  - Includes a classical neural network for performance comparison.
+  - Includes a Convolutional Neural Network (CNN), a Vision Transformer (ViT) and a Multi-Layer Perceptron (MLP) for performance comparison.
   - Generates and evaluates adversarial examples using PGD (Projected Gradient Descent).
 - **Effectiveness**: 
-  - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical layers trained for twice the epochs, although it starts to overfit much earlier than the classical counterpart.
+  - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical layers trained for five times the epochs, although it starts to overfit much earlier than the classical counterparts, with the exception of the the ViT, which was always overfitting, regardless of number of epochs or dataset size.
   - Randomly choosing which qubit to compute the expected value from during training reduces the variance of the PQC accuracy. This robustness extends to adversarial attacks, with the PQC showing higher and more consistent performance under such conditions.
-  - Testing without a fixed seed for 100 times revealed that the PQC consistently performed close to or exceeded that of a conventional linear classifier.
+  - Testing 100 times without a fixed seed demonstrated that the PQC, with only 24 parameters, consistently achieved performance comparable to classical models that have vastly more parameters—610, 2,576, and 101,954 respectively.
   - Both random and deterministic methods outperform the classical layers on PGD adversarial attacks by a wide margin when testing, both with and without a fixed seed.
 
 
