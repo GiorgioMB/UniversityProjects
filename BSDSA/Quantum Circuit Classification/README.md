@@ -12,7 +12,7 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Constructs and utilizes quantum circuits for image data encoding and classification.
   - Trains quantum models to classify images and evaluates their performance.
   - Visualizes both the generated data and the performance metrics of quantum models.
-  - Includes a Convolutional Neural Network (CNN), a Vision Transformer (ViT) and a Multi-Layer Perceptron (MLP) for performance comparison.
+  - Includes a Multi-Layer Perceptron (MLP), a Convolutional Neural Network (CNN) and a Vision Transformer (ViT) for performance comparison.
   - Generates and evaluates adversarial examples using PGD (Projected Gradient Descent).
 - **Effectiveness**: 
   - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical layers trained for five times the epochs, although it starts to overfit much earlier than the classical counterparts, with the exception of the the ViT, which was always overfitting, regardless of number of epochs or dataset size.
