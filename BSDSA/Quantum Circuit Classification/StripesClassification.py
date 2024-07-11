@@ -2,7 +2,6 @@ import pennylane as qml
 from pennylane import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple
-from regex import D
 import seaborn as sns
 from pennylane.measurements import ExpectationMP
 import torch.nn as nn
