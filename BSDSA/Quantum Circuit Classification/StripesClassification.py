@@ -7,7 +7,6 @@ from pennylane.measurements import ExpectationMP
 import torch.nn as nn
 import torch
 from einops.layers.torch import Rearrange
-
 torch.manual_seed(62101)
 np.random.seed(62101)
 ## 0. Define Vision Transformer model for image classification
@@ -57,7 +56,8 @@ class ViT(nn.Module):
 
         return self.mlp_head(x)
 ## 1. Generate synthetic binary image data
-def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  noise_level: float = 0.1, noise_type = "uniform") -> Tuple[np.ndarray, np.ndarray]:
+def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  
+                noise_level: float = 0.1, noise_type = "uniform") -> Tuple[np.ndarray, np.ndarray]:
     """
     Generates synthetic binary image data with horizontal and vertical stripes
     Arguments:
@@ -99,7 +99,8 @@ def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  n
     return data, labels
 
 ## 2. Visualize the generated data
-def visualize_data(data: np.ndarray = None, labels: np.ndarray = None, max_samples: int = 10, title:str = None) -> plt.figure:
+def visualize_data(data: np.ndarray = None, labels: np.ndarray = None, 
+                    max_samples: int = 10, title:str = None) -> plt.figure:
     """
     Data visualization function
     Arguments:
@@ -177,7 +178,8 @@ def sigmoid(x:np.ndarray) -> np.ndarray:
     """
     return 1 / (1 + np.exp(-x))
 
-def cost_function(params:np.ndarray, features:np.ndarray, labels:np.ndarray, not_random:bool) -> float:
+def cost_function(params:np.ndarray, features:np.ndarray, labels:np.ndarray, 
+                not_random:bool) -> float:
     """
     Binary cross-entropy cost function for classification
 
@@ -198,7 +200,8 @@ def cost_function(params:np.ndarray, features:np.ndarray, labels:np.ndarray, not
 optimizer = qml.AdamOptimizer(stepsize=0.01, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
 
 ## 5. Define the training and testing functions
-def train_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, epochs=10, deterministic:bool = False) -> np.ndarray:
+def train_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, 
+                        epochs=10, deterministic:bool = False) -> np.ndarray:
     """
     Trains the quantum model using the cost function and optimizer
 
@@ -215,7 +218,8 @@ def train_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, e
         print(f"Epoch {epoch+1}: Cost = {cost}")
     return params
 
-def test_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, override: bool = False) -> float:
+def test_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, 
+                        override: bool = False) -> float:
     """
     Tests the quantum model and returns the accuracy
 
@@ -232,7 +236,9 @@ def test_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, ov
 
 
 ## 6. Define training and testing functions for the classical model
-def train_classical_model(model:nn.Module, data:np.ndarray, labels:np.ndarray, epochs:int=10, flatten:bool = True, batching: bool = False, batch_size:int = 64) -> nn.Module:
+def train_classical_model(model:nn.Module, data:np.ndarray, labels:np.ndarray, 
+                        epochs:int=10, flatten:bool = True, batching: bool = False, 
+                        batch_size:int = 64) -> nn.Module:
     """
     Trains the classical model using the mean squared error loss
 
@@ -281,7 +287,8 @@ def train_classical_model(model:nn.Module, data:np.ndarray, labels:np.ndarray, e
                 print(f"Epoch {epoch+1}: Loss = {loss.item() / len(features)}")
     return model
 
-def test_classical_model(model: nn.Module, data:np.ndarray, labels:np.ndarray, flatten:bool = True, batching: bool = False, batch_size:int = 64) -> float:
+def test_classical_model(model: nn.Module, data:np.ndarray, labels:np.ndarray, 
+                        flatten:bool = True, batching: bool = False, batch_size:int = 64) -> float:
     """
     Tests the classical model and returns the accuracy
 
@@ -317,7 +324,10 @@ def test_classical_model(model: nn.Module, data:np.ndarray, labels:np.ndarray, f
     return accuracy
 
 ## 7. Generate adversarial examples with Projected Gradient Descent
-def generate_pgd_adversarial_example_classical(model:nn.Module, data:np.ndarray, labels:np.ndarray, epsilon:float=0.4, alpha:float=0.01, num_iter:int=100, flatten:bool = True) -> np.ndarray:
+def generate_pgd_adversarial_example_classical(model:nn.Module, data:np.ndarray, 
+                                                labels:np.ndarray, epsilon:float=0.5, 
+                                                alpha:float=0.01, num_iter:int=100, 
+                                                flatten:bool = True) -> np.ndarray:
     """
     Generate adversarial examples using Projected Gradient Descent for the classical model
     The adversarial examples are generated by perturbing the input features using the following formula:
@@ -352,7 +362,10 @@ def generate_pgd_adversarial_example_classical(model:nn.Module, data:np.ndarray,
         features.requires_grad = True
     return np.array([f.detach().numpy() for f in features])
 
-def generate_pgd_adversarial_example_quantum(params:np.ndarray, data:np.ndarray, labels:np.ndarray, epsilon:float=0.4, alpha:float=0.01, num_iter:int=100) -> np.ndarray:
+def generate_pgd_adversarial_example_quantum(params:np.ndarray, data:np.ndarray, 
+                                            labels:np.ndarray, epsilon:float=0.5, 
+                                            alpha:float=0.01, num_iter:int=100, 
+                                            override:bool=False) -> np.ndarray:
     """
     Generate adversarial examples using Projected Gradient Descent for the quantum model
     The adversarial examples are generated by perturbing the input features using the following formula:
@@ -374,7 +387,7 @@ def generate_pgd_adversarial_example_quantum(params:np.ndarray, data:np.ndarray,
 
     for i in range(num_iter):
         optimizer.zero_grad()
-        outputs = nn.Sigmoid()(cost_circuit(features, params, testing=True))
+        outputs = nn.Sigmoid()(cost_circuit(features, params, testing=(not override)))
         outputs = torch.cat((outputs, 1 - outputs), dim=0)
         outputs = outputs.view(-1, 2)
         loss = nn.CrossEntropyLoss()(outputs, labels)
@@ -390,8 +403,8 @@ def generate_pgd_adversarial_example_quantum(params:np.ndarray, data:np.ndarray,
 
 if __name__ == "__main__":
     ##Note if size of the image is changed, the number of qubits must be changed accordingly above in the script to be 2log2(size)
-    train_data, train_labels = generate_data(num_samples=10000, size=4, noise=False)
-    test_data, test_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.5, noise_type="normal")
+    train_data, train_labels = generate_data(num_samples=1000, size=4, noise=False)
+    test_data, test_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.3, noise_type="normal")
     visualize_data(train_data, train_labels)
     visualize_data(test_data, test_labels)
     save_image = True
@@ -416,7 +429,6 @@ if __name__ == "__main__":
         nn.Sigmoid()
     )
     AttentionClassifier = ViT()
-    deterministic_qubit_sampling = False ## Set to True to check whether the model performs better if only one qubit is sampled
 
     ## Train without noise and test with noise
     ## Classical models
@@ -437,10 +449,18 @@ if __name__ == "__main__":
 
     ## Quantum model
     print("----------------------------")
-    trained_params = train_quantum_model(train_data, train_labels, params, epochs=epochs, deterministic = deterministic_qubit_sampling)
-    accuracy = test_quantum_model(test_data, test_labels, trained_params)
+    trained_params_det = train_quantum_model(train_data, train_labels, params, epochs=epochs, deterministic = True)
+    accuracy_det = test_quantum_model(test_data, test_labels, trained_params_det)
+    print(f"Classical sampling accuracy: {accuracy_det*100:.2f}%")
+    print("----------------------------")
+    trained_params = train_quantum_model(train_data, train_labels, params, epochs=epochs)
+    accuracy = test_quantum_model(test_data, test_labels, trained_params, override = True)
     print(f"Number of parameters: {len(trained_params.flatten())}")
     print(f"Accuracy: {accuracy*100:.2f}%")
+    print(f"Is random qubit sampling better? {accuracy > accuracy_det}")
+    print("----------------------------")
+    
+
 
     ## Visualizing the quantum circuit and saving the image
     plt.rcParams.update({'font.size': 12, 'font.family': 'serif'})
@@ -455,6 +475,7 @@ if __name__ == "__main__":
     perturbed_CNN_features = generate_pgd_adversarial_example_classical(trained_CNN, low_noise_data.reshape(-1, 1, 4, 4), low_noise_labels, flatten=False)
     perturbed_Attention_features = generate_pgd_adversarial_example_classical(trained_Attention, low_noise_data.reshape(-1, 1, 4, 4), low_noise_labels, flatten=False)
     perturbed_quantum_features = generate_pgd_adversarial_example_quantum(trained_params, low_noise_data, low_noise_labels)
+    perturbed_quantum_det = generate_pgd_adversarial_example_quantum(trained_params_det, low_noise_data, low_noise_labels, override = True)
     print("Adversarial examples generated successfully")
     ## Displaying the adversarial examples
     visualize_data(perturbed_MLP_features.reshape(-1,4,4), low_noise_labels, title="Adversarial Examples for the MLP Model")
@@ -466,18 +487,22 @@ if __name__ == "__main__":
     accuracy_CNN_perturbed = test_classical_model(trained_CNN, perturbed_CNN_features, low_noise_labels, flatten=False)
     accuracy_Attention_perturbed = test_classical_model(trained_Attention, perturbed_Attention_features, low_noise_labels, flatten=False)
     accuracy_quantum_perturbed = test_quantum_model(perturbed_quantum_features, low_noise_labels, trained_params)
+    accuracy_quantum_perturbed_det = test_quantum_model(perturbed_quantum_det, low_noise_labels, trained_params_det)
     print(f"Accuracy of the MLP model with PGD adversarial examples: {accuracy_MLP_perturbed*100:.2f}%")
     print(f"Accuracy of the CNN model with PGD adversarial examples: {accuracy_CNN_perturbed*100:.2f}%")
     print(f"Accuracy of the Attention model with PGD adversarial examples: {accuracy_Attention_perturbed*100:.2f}%")
     print(f"Accuracy of the quantum model with PGD adversarial examples: {accuracy_quantum_perturbed*100:.2f}%")
+    print(f"Accuracy of the quantum model with PGD adversarial examples (deterministic): {accuracy_quantum_perturbed_det*100:.2f}%")
     print("----------------------------")
     print(f"Accuracy loss of the MLP model: {abs(accuracy_MLP*100 - accuracy_MLP_perturbed*100):.2f}%")
     print(f"Accuracy loss of the CNN model: {abs(accuracy_CNN*100 - accuracy_CNN_perturbed*100):.2f}%")
     print(f"Accuracy loss of the Attention model: {abs(accuracy_Attention*100 - accuracy_Attention_perturbed*100):.2f}%")
     print(f"Accuracy loss of the quantum model: {abs(accuracy*100 - accuracy_quantum_perturbed*100):.2f}%")
     print(f"Is the quantum model best? {accuracy_quantum_perturbed > accuracy_MLP_perturbed and accuracy_quantum_perturbed > accuracy_CNN_perturbed and accuracy_quantum_perturbed > accuracy_Attention_perturbed}")
+    print(f"Is random sampling while training better? {accuracy_quantum_perturbed > accuracy_quantum_perturbed_det}")
     accuracy_quantum_perturbed_random = test_quantum_model(perturbed_quantum_features, low_noise_labels, trained_params, override = True)
     print("----------------------------")
     print(f"Accuracy of the quantum model with PGD adversarial examples: {accuracy_quantum_perturbed_random*100:.2f}% (random qubit sampling)")
-    print(f"Difference between random qubit sampling and deterministic: {abs(accuracy_quantum_perturbed_random*100 - accuracy_quantum_perturbed*100):.2f}%\nIs random qubit sampling better? {accuracy_quantum_perturbed_random > accuracy_quantum_perturbed}")
+    print(f"Difference between random qubit sampling and deterministic: {abs(accuracy_quantum_perturbed_random*100 - accuracy_quantum_perturbed*100):.2f}%\nIs random qubit sampling better? {accuracy_quantum_perturbed_random >= accuracy_quantum_perturbed}")
     print(f"Is random qubit sampling better than the classical models? {accuracy_quantum_perturbed_random > accuracy_MLP_perturbed and accuracy_quantum_perturbed_random > accuracy_CNN_perturbed and accuracy_quantum_perturbed_random > accuracy_Attention_perturbed}")
+    print(f"Is pure random sampling better? {accuracy_quantum_perturbed_random > accuracy_quantum_perturbed_det}")
