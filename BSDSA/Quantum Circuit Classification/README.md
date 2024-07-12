@@ -69,10 +69,11 @@ Before running the script, make sure you have installed Python and the required 
   - Torch == 2.3.1
   - Scikit-learn == 1.5.0
   - numpy == 1.26.4
+  - kaggle == 1.6.6
     
     You can install or upgrade these libraries using the command:
   ```bash
-  pip install pennylane==0.36.0 torch==2.3.1 scikit-learn==1.5.0 numpy==1.26.4
+  pip install pennylane==0.36.0 torch==2.3.1 scikit-learn==1.5.0 numpy==1.26.4 kaggle==1.6.6
   ```
 
 2. Clone or download `StripesClassification.py` or `DigitClassification.py` to your local machine.
