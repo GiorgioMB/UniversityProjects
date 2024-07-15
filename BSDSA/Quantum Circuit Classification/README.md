@@ -12,7 +12,7 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Constructs and utilizes quantum circuits for image data encoding and classification.
   - Trains quantum models to classify images and evaluates their performance.
   - Visualizes both the generated data and the performance metrics of quantum models.
-  - Includes a Multi-Layer Perceptron (MLP), a Convolutional Neural Network (CNN), a Vision Transformer (ViT) and a Convolutional Vision Transformer (CVT) for performance comparison.
+  - Includes a Multi-Layer Perceptron (MLP), a Convolutional Neural Network (CNN), a Vision Transformer (ViT) and a Convolutional Transformer (CVT) for performance comparison.
   - Generates and evaluates adversarial examples using PGD (Projected Gradient Descent).
 - **Effectiveness**: 
   - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical layers trained for five times the epochs, although it starts to overfit much earlier than the classical counterparts, with the exception of the the ViT and CVT, which were always overfitting, regardless of number of epochs or dataset size.
@@ -20,9 +20,16 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Testing 100 times without a fixed seed demonstrated that the PQC, with only 24 parameters, consistently achieved performance comparable to classical models that have vastly more parameters—610, 2,576, and 101,954 respectively.
   - Both random and deterministic methods outperform the classical layers on PGD adversarial attacks by a wide margin when testing, both with and without a fixed seed.
 
-
 **Figure 1**: The Optimized Ansatz for This Problem
 ![Optimized Ansatz](CircuitStripes.png)
+### AnimalFaceClassification.py
+- **Purpose**: Implements a quantum classifier to differentiate between `wild`, `cat` and `dog` images.
+- **Key Features**:
+  - Downloads and pre-processes the AFHQ dataset.
+  - Trains an hybrid PQC-MLP model for image classification.
+  - Includes a MLP, CNN, ViT and CVT for performance comparison.
+  - Generates and evaluates adversarial examples using PGD.
+
 
 ### DigitClassification.py
 - **Purpose**: Explores the potential of quantum neural networks by implementing a hybrid model that combines classical feature extraction done by convolutional layers with quantum circuits.
@@ -60,6 +67,7 @@ This project includes comprehensive Python scripts that address the behaviour an
 - Matplotlib
 - Seaborn
 - PyTorch
+
 
 ## How to Run
 Before running the script, make sure you have installed Python and the required libraries. Here are the steps:
