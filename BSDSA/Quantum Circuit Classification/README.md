@@ -70,28 +70,35 @@ This project includes comprehensive Python scripts that address the behaviour an
 
 
 ## How to Run
-Before running the script, make sure you have installed Python and the required libraries. Here are the steps:
 
-  1. Ensure the following specific versions of the libraries are installed:
-  - Pennylane == 0.36.0
-  - Torch == 2.3.1
-  - Scikit-learn == 1.5.0
-  - numpy == 1.26.4
-  - kaggle == 1.6.6
-  - timm == 1.0.7
-    
-    You can install or upgrade these libraries using the command:
-  ```bash
-  pip install pennylane==0.36.0 torch==2.3.1 scikit-learn==1.5.0 numpy==1.26.4 kaggle==1.6.6 timm==1.0.7
-  ```
+Before running the scripts, ensure that you have Python installed and the environment properly set up. Here are the steps to get started:
 
-2. Clone or download one of the scripts to your local machine.
-3. Navigate to the directory where you saved the script via terminal or command prompt.
-4. Adjust script parameters (e.g. epochs, optimizer, etc.) as needed.
-5. Run the script with the following command:
+### Using Conda (Recommended)
+
+1. **Clone the Repository**: Clone or download the repository to your local machine.
    ```bash
-   python <script_name>.py
+   git clone <repository-url>
+   cd <repository-directory>
    ```
+2. **Create and Activate the Conda Environment**: Create the environment from the environment.yaml file
+   ```bash
+   conda env create -f environment.yaml
+   conda activate quantum_classification
+   ```
+   Using pip
+   ```bash
+   python -m venv env
+   source env/bin/activate  # On Windows use `env\Scripts\activate`
+   pip install -r requirements.txt
+   ```
+3. Once the environment is set up, you can run the scripts as follows:
+  - Navigate to the directory containing the scripts.
+  - Adjust script parameters as needed in the script files or via command-line arguments, if supported.
+  - Execute the script using Python. For example:
+    ```bash
+    python <script_name>.py
+    ```
+
    
 ## Future Expansions
 In collaboration with the Bocconi Students Data Science Association (BSDSA) we aim to further enhance the capabilities of the quantum image classifier through:
