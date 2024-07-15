@@ -15,7 +15,7 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Includes a Multi-Layer Perceptron (MLP), a Convolutional Neural Network (CNN), a Vision Transformer (ViT) and a Convolutional Vision Transformer (CVT) for performance comparison.
   - Generates and evaluates adversarial examples using PGD (Projected Gradient Descent).
 - **Effectiveness**: 
-  - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical layers trained for five times the epochs, although it starts to overfit much earlier than the classical counterparts, with the exception of the the ViT, which was always overfitting, regardless of number of epochs or dataset size.
+  - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical layers trained for five times the epochs, although it starts to overfit much earlier than the classical counterparts, with the exception of the the ViT and CVT, which were always overfitting, regardless of number of epochs or dataset size.
   - Randomly choosing which qubit to compute the expected value from during training reduces the variance of the PQC accuracy. This robustness extends to adversarial attacks, with the PQC showing higher and more consistent performance under such conditions.
   - Testing 100 times without a fixed seed demonstrated that the PQC, with only 24 parameters, consistently achieved performance comparable to classical models that have vastly more parameters—610, 2,576, and 101,954 respectively.
   - Both random and deterministic methods outperform the classical layers on PGD adversarial attacks by a wide margin when testing, both with and without a fixed seed.
@@ -25,7 +25,7 @@ This project includes comprehensive Python scripts that address the behaviour an
 ![Optimized Ansatz](CircuitStripes.png)
 
 ### DigitClassification.py
-- **Purpose**: Explores the potential of quantum neural networks by implementing a hybrid model that combines classical feature extraction with convolutional layers with quantum circuits.
+- **Purpose**: Explores the potential of quantum neural networks by implementing a hybrid model that combines classical feature extraction done by convolutional layers with quantum circuits.
 - **Key Features**:
   - Trains the hybrid model to classify between images of digits 0 and 1, focusing on binary classification due to limitations in quantum simulation capabilities.
   - Initial `Conv2d` layers perform classical convolution and pooling, reducing image dimensions while preserving essential features.
