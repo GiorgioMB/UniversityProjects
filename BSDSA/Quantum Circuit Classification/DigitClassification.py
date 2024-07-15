@@ -8,9 +8,9 @@ import pennylane as qml
 import torch
 import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
-torch.manual_seed(62101)
-np.random.seed(62101)
-qnp.random.seed(62101)
+torch.manual_seed(3407) ## This seed was seen as best for torch models in "Torch.manual_seed(3407) is all you need", Picard, 2021
+np.random.seed(3407)
+qnp.random.seed(3407)
  
 class NeuralPreprocessor(nn.Module):
     def __init__(self):
@@ -128,7 +128,7 @@ def cost_function(params:qnp.ndarray, features:qnp.ndarray, labels:qnp.ndarray, 
     loss = loss / len(features)
     return loss
 
-optimizer = qml.AdamOptimizer(stepsize=0.01, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
+optimizer = qml.AdamOptimizer(stepsize=0.02, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
 
 def train_quantum_model(data:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray, epochs=10, deterministic:bool = False) -> np.ndarray:
     """
@@ -159,13 +159,14 @@ def test_quantum_model(data:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray,
     """
     features = [img.flatten() for img in data]
     raw_logits = [cost_circuit(f, params, testing = (not override)) for f in features]
+    # Note not equal to sign.
     accuracy = np.mean([(np.sign(pred) != lab) for pred, lab in zip(raw_logits, labels)])
     return accuracy
 
 qdata = qnp.array(new_X)
 qlabels = qnp.array(y)
-qdata_train, qdata_test, qlabels_train, qlabels_test = train_test_split(qdata, qlabels, test_size=0.2, random_state=62101)
-num_layers = 2
+qdata_train, qdata_test, qlabels_train, qlabels_test = train_test_split(qdata, qlabels, test_size=0.2, random_state=3407)
+num_layers = 3
 epochs = 2
 qparams = qnp.random.uniform(0, np.pi, (num_layers,num_qubits, 3))
 qparams = train_quantum_model(qdata_train, qlabels_train, qparams, epochs=epochs)
@@ -175,13 +176,15 @@ print(f"Accuracy of the Parametrized Quantum Circuit: {accuracy}")
 print(f"Number of parameters in the quantum model: {len(qparams.flatten())}")
 
 new_X_tensor = torch.tensor(new_X, dtype=torch.float32)
-X_classic_train, X_classic_test, y_classic_train, y_classic_test = train_test_split(new_X_tensor, y_tensor, test_size=0.2, random_state=62101)
+X_classic_train, X_classic_test, y_classic_train, y_classic_test = train_test_split(new_X_tensor, y_tensor, test_size=0.2, random_state=3407)
 classical_model = nn.Sequential(
-    nn.Linear(16, 2),
+    nn.Linear(16, 32),
+    nn.ReLU(),
+    nn.Linear(32, 2),
     nn.Sigmoid()
 )
 print("Training Classical Model...")
-optimizer = torch.optim.Adam(classical_model.parameters(), lr=0.05)
+optimizer = torch.optim.Adam(classical_model.parameters(), lr=0.01)
 criterion = nn.CrossEntropyLoss()
 for epoch in range(epochs):
     optimizer.zero_grad()
