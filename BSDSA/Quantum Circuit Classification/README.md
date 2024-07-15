@@ -77,7 +77,7 @@ Before running the script, make sure you have installed Python and the required 
   pip install pennylane==0.36.0 torch==2.3.1 scikit-learn==1.5.0 numpy==1.26.4 kaggle==1.6.6 timm==1.0.7
   ```
 
-2. Clone or download `StripesClassification.py` or `DigitClassification.py` to your local machine.
+2. Clone or download one of the scripts to your local machine.
 3. Navigate to the directory where you saved the script via terminal or command prompt.
 4. Adjust script parameters (e.g. epochs, optimizer, etc.) as needed.
 5. Run the script with the following command:
