@@ -9,7 +9,7 @@ import torch
 from einops.layers.torch import Rearrange
 torch.manual_seed(3407) ## This seed was seen as best for torch models in "Torch.manual_seed(3407) is all you need", Picard, 2021
 np.random.seed(3407)
-## 0. Define Vision Transformer model for image classification
+## 0. Define Vision Transformer and Convolutional Vision Transformer
 class PatchEmbedding(nn.Module):
     def __init__(self, in_channels=1, patch_size=4, emb_size=64, dropout=0.1):
         super().__init__()
@@ -24,11 +24,59 @@ class PatchEmbedding(nn.Module):
         x = self.proj(x)
         return x
 
+class ConvEmbeddings(nn.Module):
+    def __init__(self, in_channels=1, patch_size=4, emb_size=64, dropout=0.1):
+        super().__init__()
+        self.proj = nn.Sequential(
+            nn.Conv2d(in_channels, emb_size, kernel_size=patch_size, stride=patch_size),
+            nn.Dropout(dropout)
+        )
+
+    def forward(self, x):
+        x = self.proj(x) 
+        x = x.flatten(2)
+        x = x.transpose(1, 2)
+        return x
+
+
+
 class ViT(nn.Module):
     def __init__(self, image_size=4, patch_size=4, num_classes=2, channels=1, emb_size=64, depth=3, heads=4, mlp_dim=128, dropout=0.1):
         super().__init__()
         self.patch_embedding = PatchEmbedding(channels, patch_size, emb_size, dropout)
         
+        self.cls_token = nn.Parameter(torch.randn(1, 1, emb_size))
+        self.positional_embedding = nn.Parameter(torch.randn((image_size // patch_size) ** 2 + 1, emb_size))
+        self.dropout = nn.Dropout(dropout)
+
+        self.transformer = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=emb_size, nhead=heads, dim_feedforward=mlp_dim, dropout=dropout),
+            num_layers=depth
+        )
+
+        self.to_cls_token = nn.Identity()
+        self.mlp_head = nn.Sequential(
+            nn.LayerNorm(emb_size),
+            nn.Linear(emb_size, num_classes)
+        )
+
+    def forward(self, x):
+        x = self.patch_embedding(x)
+        cls_tokens = self.cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)
+        x += self.positional_embedding
+        x = self.dropout(x)
+
+        x = self.transformer(x)
+        x = self.to_cls_token(x[:, 0])
+
+        return self.mlp_head(x)
+
+class CVT(nn.Module):
+    def __init__(self, image_size=4, patch_size=4, num_classes=2, channels=1, emb_size=64, depth=3, heads=4, mlp_dim=128, dropout=0.1):
+        super().__init__()
+        self.patch_embedding = ConvEmbeddings(channels, patch_size, emb_size, dropout)
+
         self.cls_token = nn.Parameter(torch.randn(1, 1, emb_size))
         self.positional_embedding = nn.Parameter(torch.randn((image_size // patch_size) ** 2 + 1, emb_size))
         self.dropout = nn.Dropout(dropout)
@@ -429,6 +477,7 @@ if __name__ == "__main__":
         nn.Sigmoid()
     )
     AttentionClassifier = ViT()
+    ConvAttClassifier = CVT()
 
     ## Train without noise and test with noise
     ## Classical models
@@ -444,9 +493,13 @@ if __name__ == "__main__":
     print("----------------------------")
     trained_Attention = train_classical_model(AttentionClassifier, train_data.reshape(-1, 1, 4, 4), train_labels, epochs=epochs * 5, flatten=False, batching = True)
     accuracy_Attention = test_classical_model(trained_Attention, test_data.reshape(-1, 1, 4, 4), test_labels, flatten=False)
-    print(f"Number of parameters in the Attention model: {sum(p.numel() for p in trained_Attention.parameters())}")
-    print(f"Accuracy of the Attention model: {accuracy_Attention*100:.2f}%")
-
+    print(f"Number of parameters in the Vision Transformer model: {sum(p.numel() for p in trained_Attention.parameters())}")
+    print(f"Accuracy of the ViT model: {accuracy_Attention*100:.2f}%")
+    print("----------------------------")
+    trained_CVT = train_classical_model(ConvAttClassifier, train_data.reshape(-1, 1, 4, 4), train_labels, epochs=epochs*5, flatten=False, batching = True)
+    accuracy_CVT = test_classical_model(trained_CVT, test_data.reshape(-1, 1, 4, 4), test_labels, flatten=False)
+    print(f"Number of parameters in the Convolusional Vision Transformer model: {sum(p.numel() for p in trained_CVT.parameters())}")
+    print(f"Accuracy of the CVT model: {accuracy_CVT*100:.2f}%")
     ## Quantum model
     print("----------------------------")
     trained_params_det = train_quantum_model(train_data, train_labels, params, epochs=epochs, deterministic = True)
@@ -474,35 +527,50 @@ if __name__ == "__main__":
     perturbed_MLP_features = generate_pgd_adversarial_example_classical(trained_MLP, low_noise_data, low_noise_labels)
     perturbed_CNN_features = generate_pgd_adversarial_example_classical(trained_CNN, low_noise_data.reshape(-1, 1, 4, 4), low_noise_labels, flatten=False)
     perturbed_Attention_features = generate_pgd_adversarial_example_classical(trained_Attention, low_noise_data.reshape(-1, 1, 4, 4), low_noise_labels, flatten=False)
+    perturbed_CVT_features = generate_pgd_adversarial_example_classical(trained_CVT, low_noise_data.reshape(-1, 1, 4, 4), low_noise_labels, flatten=False)
     perturbed_quantum_features = generate_pgd_adversarial_example_quantum(trained_params, low_noise_data, low_noise_labels)
     perturbed_quantum_det = generate_pgd_adversarial_example_quantum(trained_params_det, low_noise_data, low_noise_labels, override = True)
     print("Adversarial examples generated successfully")
     ## Displaying the adversarial examples
-    visualize_data(perturbed_MLP_features.reshape(-1,4,4), low_noise_labels, title="Adversarial Examples for the MLP Model")
-    visualize_data(perturbed_CNN_features.reshape(-1,4,4), low_noise_labels, title="Adversarial Examples for the CNN Model")
-    visualize_data(perturbed_quantum_features.reshape(-1,4,4), low_noise_labels, title="Adversarial Examples for the Quantum Model")
-    visualize_data(perturbed_Attention_features.reshape(-1,4,4), low_noise_labels, title="Adversarial Examples for the Attention Model")
+    print("----------------------------")
+    print("Displaying adversarial examples for the Multi-Layer Perceptron model")
+    visualize_data(perturbed_MLP_features.reshape(-1,4,4), low_noise_labels)
+    print("----------------------------")
+    print("Displaying adversarial examples for the Convolutional Neural Network model")
+    visualize_data(perturbed_CNN_features.reshape(-1,4,4), low_noise_labels)
+    print("----------------------------")
+    print("Displaying adversarial examples for the Vision Transformer model")
+    visualize_data(perturbed_Attention_features.reshape(-1,4,4), low_noise_labels)
+    print("----------------------------")
+    print("Displaying adversarial examples for the Convolutional Vision Transformer model")
+    visualize_data(perturbed_CVT_features.reshape(-1,4,4), low_noise_labels)
+    print("----------------------------")
+    print("Displaying adversarial examples for the Quantum model")
+    visualize_data(perturbed_quantum_features.reshape(-1,4,4), low_noise_labels)
     ## Testing the models with the adversarial examples
     accuracy_MLP_perturbed = test_classical_model(trained_MLP, perturbed_MLP_features, low_noise_labels)
     accuracy_CNN_perturbed = test_classical_model(trained_CNN, perturbed_CNN_features, low_noise_labels, flatten=False)
     accuracy_Attention_perturbed = test_classical_model(trained_Attention, perturbed_Attention_features, low_noise_labels, flatten=False)
+    accuracy_CVT_perturbed = test_classical_model(trained_CVT, perturbed_CVT_features, low_noise_labels, flatten=False)
     accuracy_quantum_perturbed = test_quantum_model(perturbed_quantum_features, low_noise_labels, trained_params)
     accuracy_quantum_perturbed_det = test_quantum_model(perturbed_quantum_det, low_noise_labels, trained_params_det)
     print(f"Accuracy of the MLP model with PGD adversarial examples: {accuracy_MLP_perturbed*100:.2f}%")
     print(f"Accuracy of the CNN model with PGD adversarial examples: {accuracy_CNN_perturbed*100:.2f}%")
-    print(f"Accuracy of the Attention model with PGD adversarial examples: {accuracy_Attention_perturbed*100:.2f}%")
+    print(f"Accuracy of the ViT model with PGD adversarial examples: {accuracy_Attention_perturbed*100:.2f}%")
+    print(f"Accuracy of the CVT model with PGD adversarial examples: {accuracy_CVT_perturbed*100:.2f}%")
     print(f"Accuracy of the quantum model with PGD adversarial examples: {accuracy_quantum_perturbed*100:.2f}%")
     print(f"Accuracy of the quantum model with PGD adversarial examples (deterministic): {accuracy_quantum_perturbed_det*100:.2f}%")
     print("----------------------------")
     print(f"Accuracy loss of the MLP model: {abs(accuracy_MLP*100 - accuracy_MLP_perturbed*100):.2f}%")
     print(f"Accuracy loss of the CNN model: {abs(accuracy_CNN*100 - accuracy_CNN_perturbed*100):.2f}%")
-    print(f"Accuracy loss of the Attention model: {abs(accuracy_Attention*100 - accuracy_Attention_perturbed*100):.2f}%")
+    print(f"Accuracy loss of the ViT model: {abs(accuracy_Attention*100 - accuracy_Attention_perturbed*100):.2f}%")
+    print(f"Accuracy loss of the CVT model: {abs(accuracy_CVT*100 - accuracy_CVT_perturbed*100):.2f}%")
     print(f"Accuracy loss of the quantum model: {abs(accuracy*100 - accuracy_quantum_perturbed*100):.2f}%")
-    print(f"Is the quantum model best? {accuracy_quantum_perturbed > accuracy_MLP_perturbed and accuracy_quantum_perturbed > accuracy_CNN_perturbed and accuracy_quantum_perturbed > accuracy_Attention_perturbed}")
+    print(f"Is the quantum model best? {accuracy_quantum_perturbed > accuracy_MLP_perturbed and accuracy_quantum_perturbed > accuracy_CNN_perturbed and accuracy_quantum_perturbed > accuracy_Attention_perturbed and accuracy_quantum_perturbed > accuracy_CVT_perturbed}")
     print(f"Is random sampling while training better? {accuracy_quantum_perturbed > accuracy_quantum_perturbed_det}")
     accuracy_quantum_perturbed_random = test_quantum_model(perturbed_quantum_features, low_noise_labels, trained_params, override = True)
     print("----------------------------")
     print(f"Accuracy of the quantum model with PGD adversarial examples: {accuracy_quantum_perturbed_random*100:.2f}% (random qubit sampling)")
     print(f"Difference between random qubit sampling and deterministic: {abs(accuracy_quantum_perturbed_random*100 - accuracy_quantum_perturbed*100):.2f}%\nIs random qubit sampling better? {accuracy_quantum_perturbed_random >= accuracy_quantum_perturbed}")
-    print(f"Is random qubit sampling better than the classical models? {accuracy_quantum_perturbed_random > accuracy_MLP_perturbed and accuracy_quantum_perturbed_random > accuracy_CNN_perturbed and accuracy_quantum_perturbed_random > accuracy_Attention_perturbed}")
+    print(f"Is random qubit sampling better than the classical models? {accuracy_quantum_perturbed_random > accuracy_MLP_perturbed and accuracy_quantum_perturbed_random > accuracy_CNN_perturbed and accuracy_quantum_perturbed_random > accuracy_Attention_perturbed and accuracy_quantum_perturbed_random > accuracy_CVT_perturbed}")
     print(f"Is pure random sampling better? {accuracy_quantum_perturbed_random > accuracy_quantum_perturbed_det}")
