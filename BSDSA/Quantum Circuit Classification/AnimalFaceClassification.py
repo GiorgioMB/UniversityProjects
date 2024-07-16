@@ -78,9 +78,10 @@ def quantum_circuit(features, params):
     qml.AmplitudeEmbedding(features, wires=range(num_qubits), normalize = True)
     qml.StronglyEntanglingLayers(params, wires=range(num_qubits))
     return [qml.expval(qml.PauliZ(i)) for i in range(num_qubits)]
-class PQC_MLP(nn.Module):
+
+class QMLP(nn.Module):
     def __init__(self, hidden_dim, output_dim, num_qlayers, num_lin_layers):
-        super(PQC_MLP, self).__init__()
+        super(QMLP, self).__init__()
         if num_lin_layers < 1:
             raise ValueError("Number of Linear Layers must be at least 1")
         if num_qlayers < 1:
@@ -96,71 +97,18 @@ class PQC_MLP(nn.Module):
                 self.lin_layers.append(nn.Linear(hidden_dim, hidden_dim))
             self.head = nn.Linear(hidden_dim, output_dim)
         else:
-            self.head = nn.Linear(num_qubits, output_dim)  # Directly connecting the output if only 1 linear layer
+            self.head = nn.Linear(num_qubits, output_dim)
         self.relu = nn.ReLU()
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
-        qc_output = quantum_circuit(x, self.quantum_params)  # Output from quantum circuit
+        qc_output = quantum_circuit(x, self.quantum_params)
         qc_output = torch.stack(qc_output).float().permute(1, 0)
         x = qc_output
         for layer in self.lin_layers:
             x = self.relu(layer(x))
         x = self.head(x)
         return self.softmax(x)
-
-class QMLP(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, num_qlayers, num_lin_layers, device):
-        super(QMLP, self).__init__()
-        
-        if num_lin_layers < 1:
-            raise ValueError("Number of Linear Layers must be at least 1")
-
-        self.num_qubits = int(np.log2(input_dim))
-        if 2**self.num_qubits != input_dim:
-            raise ValueError("Input dimension must be a power of 2 for amplitude embedding.")
-        
-        self.quantum_params = nn.Parameter(torch.rand(num_qlayers, self.num_qubits, 3))
-        
-        self.dev_qml = qml.device("default.qubit", wires=self.num_qubits)
-        
-        self.circuit = self.create_quantum_circuit()
-        
-        self.lin_layers = nn.ModuleList()
-        self.setup_linear_layers(hidden_dim, output_dim, num_lin_layers)
-        
-        self.relu = nn.ReLU()
-        self.softmax = nn.Softmax(dim=1)
-        self.device = device
-
-    def forward(self, x):
-        q_out = torch.tensor([self.circuit(xi) for xi in x]).unsqueeze(-1).to(self.device).float()
-        q_out = self.relu(q_out)
-        
-        for layer in self.lin_layers:
-            q_out = self.relu(layer(q_out))
-        
-        return self.softmax(q_out)
-    
-    def create_quantum_circuit(self):
-        """ Returns a quantum node that runs on the defined quantum device. """
-        @qml.qnode(self.dev_qml, interface='torch')
-        def circuit(x):
-            qml.AmplitudeEmbedding(x, wires=range(self.num_qubits), normalize=True)
-            qml.StronglyEntanglingLayers(self.quantum_params, wires=range(self.num_qubits))
-            return qml.expval(qml.PauliZ(np.random.randint(0, self.num_qubits)))
-        return circuit
-
-    def setup_linear_layers(self, hidden_dim, output_dim, num_lin_layers):
-        """ Dynamically adds linear layers based on the user specification. """
-        if num_lin_layers > 1:
-            self.lin_layers.append(nn.Linear(1, hidden_dim))
-            for _ in range(num_lin_layers - 2):
-                self.lin_layers.append(nn.Linear(hidden_dim, hidden_dim))
-            self.lin_layers.append(nn.Linear(hidden_dim, output_dim))
-        else:
-            self.lin_layers.append(nn.Linear(1, output_dim))
-
 
 def train_torch_model(model, X, y, epochs, optimizer, loss, batch_size=32):
     if type(X) != torch.Tensor:
@@ -202,6 +150,23 @@ def test_torch_model(model, X, y, batch_size=32):
         accuracy = 100 * correct / total
         print(f"Accuracy: {accuracy}%")
     return accuracy
+
+def generate_pgd_adversarial_data(model, X, y, epsilon=0.1, alpha=0.01, iters=10):
+    if type(X) != torch.Tensor:
+        X = torch.tensor(X, dtype=torch.float32).to(device)
+    if type(y) != torch.Tensor:
+        y = torch.tensor(y, dtype=torch.long).to(device)
+    X_adv = X.clone().detach().requires_grad_(True)
+    for i in range(iters):
+        outputs = model(X_adv)
+        loss = criterion(outputs, y)
+        loss.backward()
+        grad = X_adv.grad.data
+        X_adv = X_adv + alpha * grad.sign()
+        X_adv = torch.max(torch.min(X_adv, X + epsilon), X - epsilon).clamp(0, 1)
+        X_adv = X_adv.detach().requires_grad_(True)
+    return X_adv
+
 
 MLP = nn.Sequential(
     nn.Linear(128**2, 8192),
@@ -246,8 +211,7 @@ new_first_conv.weight.data = first_conv_layer.weight.data.mean(dim=1, keepdim=Tr
 ViT.patch_embed.proj = new_first_conv
 ViT.head = nn.Linear(ViT.head.in_features, 3)
 ViT.to(device)
-Hybrid_PQC = PQC_MLP(128, 3, 6, 4).to(device)
-rand_PQC = QMLP(128**2, 128, 3, 3, 3, device).to(device)
+Hybrid_PQC = QMLP(128, 3, 6, 4).to(device)
 ##clone the starting parameters
 starting_qparams = Hybrid_PQC.quantum_params.clone()
 ##Print the number of parameters in each model
@@ -262,7 +226,6 @@ CNN_optimizer = torch.optim.Adam(CNN.parameters(), lr=0.001)
 CVT_optimizer = torch.optim.Adam(CVT.parameters(), lr=1e-5)
 ViT_optimizer = torch.optim.Adam(ViT.parameters(), lr=1e-5)
 Hybrid_optimizer = torch.optim.Adam(Hybrid_PQC.parameters(), lr=0.005)
-rand_optimizer = torch.optim.Adam(rand_PQC.parameters(), lr=0.01)
 X_train_vision = X_train.reshape(-1, 1, 128, 128)
 X_test_vision = X_test.reshape(-1, 1, 128, 128)
 X_train_flat = X_train.reshape(-1, 128**2)
@@ -270,11 +233,6 @@ X_test_flat = X_test.reshape(-1, 128**2)
 X_train_ViT = X_train_ViT.reshape(-1, 1, 224, 224)
 X_test_ViT = X_test_ViT.reshape(-1, 1, 224, 224)
 criterion = nn.CrossEntropyLoss()
-print("Training Random PQC Model...")
-rand_PQC = train_torch_model(rand_PQC, X_train_flat, y_train, 10, rand_optimizer, criterion)
-print("Testing Random PQC Model...")
-test_torch_model(rand_PQC, X_test_flat, y_test)
-print("---------------------------------")
 print("Training Hybrid Model...")
 Hybrid_PQC = train_torch_model(Hybrid_PQC, X_train_flat, y_train, 30, Hybrid_optimizer, criterion)
 print("Testing Hybrid Model...")
@@ -300,4 +258,36 @@ print("Training MLP Model...")
 MLP = train_torch_model(MLP, X_train_flat, y_train, 10, MLP_optimizer, criterion)
 print("Testing MLP Model...")
 test_torch_model(MLP, X_test_flat, y_test)
+print("---------------------------------")
+print("Generating Adversarial Data...")
+X_adv_PQC = generate_pgd_adversarial_data(Hybrid_PQC, X_test_flat, y_test)
+X_adv_CNN = generate_pgd_adversarial_data(CNN, X_test_vision, y_test)
+X_adv_ViT = generate_pgd_adversarial_data(ViT, X_test_ViT, y_test)
+X_adv_CVT = generate_pgd_adversarial_data(CVT, X_test_vision, y_test)
+X_adv_MLP = generate_pgd_adversarial_data(MLP, X_test_flat, y_test)
+print("Displaying Adversarial Data...")
+plt.figure(figsize=(20, 20))
+for i in range(5):
+    plt.subplot(5, 2, 2*i+1)
+    plt.imshow(X_test[y_test == i][0], cmap='gray')
+    plt.title(classes[i])
+    plt.subplot(5, 2, 2*i+2)
+    plt.imshow(X_adv_PQC[y_test == i][0].cpu().numpy().reshape(128, 128), cmap='gray')
+    plt.title("Adversarial")
+plt.show()
+print("Testing models on Adversarial Data...")
+print("Hybrid Model:")
+test_torch_model(Hybrid_PQC, X_adv_PQC, y_test)
+print("---------------------------------")
+print("CNN Model:")
+test_torch_model(CNN, X_adv_CNN, y_test)
+print("---------------------------------")
+print("ViT Model:")
+test_torch_model(ViT, X_adv_ViT, y_test)
+print("---------------------------------")
+print("CVT Model:")
+test_torch_model(CVT, X_adv_CVT, y_test)
+print("---------------------------------")
+print("MLP Model:")
+test_torch_model(MLP, X_adv_MLP, y_test)
 print("---------------------------------")
