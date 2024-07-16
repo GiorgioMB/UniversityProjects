@@ -26,7 +26,7 @@ This project includes comprehensive Python scripts that address the behaviour an
 - **Purpose**: Implements a quantum classifier to differentiate between `wild`, `cat` and `dog` images.
 - **Key Features**:
   - Downloads and pre-processes the AFHQ dataset.
-  - Trains an hybrid PQC-MLP model for image classification.
+  - Trains an hybrid PQC-MLP hybrid (QMLP) model for image classification.
   - Includes a MLP, CNN, ViT and CVT for performance comparison.
   - Generates and evaluates adversarial examples using PGD.
 
