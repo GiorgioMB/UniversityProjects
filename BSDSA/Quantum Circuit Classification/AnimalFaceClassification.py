@@ -10,6 +10,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import timm
+from torch.nn import init
 import kaggle
 os.makedirs('data', exist_ok=True)
 kaggle.api.authenticate()
@@ -71,6 +72,8 @@ for i in range(3):
     plt.imshow(X_test[y_test == i][0], cmap='gray')
     plt.title(classes[i])
     plt.show()
+
+
 num_qubits = 2 * int(np.log2(128))
 dev = qml.device("default.qubit", wires=num_qubits)
 @qml.qnode(dev, interface='torch')
@@ -89,7 +92,8 @@ class QMLP(nn.Module):
         elif num_lin_layers == 1:
             print("Warning, as there are no hidden layers, hidden dimension is ignored")
 
-        self.quantum_params = nn.Parameter(torch.rand(num_qlayers, num_qubits, 3))
+        self.quantum_params = nn.Parameter(torch.Tensor(num_qlayers, num_qubits, 3))
+        init.xavier_normal_(self.quantum_params) ##This was found to be best by "Alleviating Barren Plateaus in Parameterized Quantum Machine Learning Circuits" Kashif et al (2023)
         self.lin_layers = nn.ModuleList()
         if num_lin_layers > 1:
             self.lin_layers.append(nn.Linear(num_qubits, hidden_dim))
@@ -219,13 +223,12 @@ print(f"Number of Parameters in MLP: {sum(p.numel() for p in MLP.parameters())}"
 print(f"Number of Parameters in CNN: {sum(p.numel() for p in CNN.parameters())}")
 print(f"Number of Parameters in CVT: {sum(p.numel() for p in CVT.parameters())}")
 print(f"Number of Parameters in ViT: {sum(p.numel() for p in ViT.parameters())}")
-print(f"Number of Parameters in Hybrid PQC: {sum(p.numel() for p in Hybrid_PQC.parameters())}")
-print(f"Number of Parameters in Random PQC: {sum(p.numel() for p in rand_PQC.parameters())}")
+print(f"Number of Parameters in QMLP PQC: {sum(p.numel() for p in Hybrid_PQC.parameters())}")
 MLP_optimizer = torch.optim.Adam(MLP.parameters(), lr=0.01)
 CNN_optimizer = torch.optim.Adam(CNN.parameters(), lr=0.001)
 CVT_optimizer = torch.optim.Adam(CVT.parameters(), lr=1e-5)
 ViT_optimizer = torch.optim.Adam(ViT.parameters(), lr=1e-5)
-Hybrid_optimizer = torch.optim.Adam(Hybrid_PQC.parameters(), lr=0.005)
+Hybrid_optimizer = torch.optim.NAdam(Hybrid_PQC.parameters(), lr=0.0008)
 X_train_vision = X_train.reshape(-1, 1, 128, 128)
 X_test_vision = X_test.reshape(-1, 1, 128, 128)
 X_train_flat = X_train.reshape(-1, 128**2)
@@ -234,7 +237,7 @@ X_train_ViT = X_train_ViT.reshape(-1, 1, 224, 224)
 X_test_ViT = X_test_ViT.reshape(-1, 1, 224, 224)
 criterion = nn.CrossEntropyLoss()
 print("Training Hybrid Model...")
-Hybrid_PQC = train_torch_model(Hybrid_PQC, X_train_flat, y_train, 30, Hybrid_optimizer, criterion)
+Hybrid_PQC = train_torch_model(Hybrid_PQC, X_train_flat, y_train, 20, Hybrid_optimizer, criterion)
 print("Testing Hybrid Model...")
 test_torch_model(Hybrid_PQC, X_test_flat, y_test)
 assert not torch.allclose(Hybrid_PQC.quantum_params, starting_qparams)
