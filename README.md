@@ -6,7 +6,7 @@ Welcome to my University Projects repository. Here, I showcase the diverse proje
 
 ### BAINSA, BSDSA, BSML Projects
 - **Description**: A collection of projects done in collaboration with BAINSA, BSDSA and BSML, reflecting my engagement with data science and machine learning.
-- **Key Learnings**: Hyperparameters optimization, Feature Map explanation, Sequential Model architecture, External API usage, Image processing, Object Detection, Adaptive Data Loading, Quantum Machine Learning, Adversarial Attacks.
+- **Key Learnings**: Hyperparameters optimization, Feature Map explanation, Sequential Model architecture, External API usage, Image processing, Object Detection, Adaptive Data Loading.
 
 ### Sentiment Analysis of Financial Headlines using BERT
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
@@ -14,7 +14,11 @@ Welcome to my University Projects repository. Here, I showcase the diverse proje
 
 ### BELKA Competition
 - **Description**: This project was a submission for the BELKA competition hosted on Kaggle, where the objective was to predict the binding affinity of a given molecule and protein
-- **Key Learnings**: Parallel Processing, Graph Transformer Convolutional Network, Implementation of Experimental Layer proposed [here](https://arxiv.org/abs/1610.04325)
+- **Key Learnings**: Parallel Processing, Graph Transformer Convolutional Network, Implementation of Experimental Layer proposed [here](https://arxiv.org/abs/1610.04325).
+
+### Quantum Machine Learning
+- **Description**: This project explores the use of PQCs (Parameterized Quantum Circuits) and PQC-MLP (PQC-Multi-Layer Perceptron) hybrids to evaluate their performance in various classification and regression tasks. It involves testing a novel fitting method and comparing the capabilities of these quantum-based models against current state-of-the-art (SOTA) architectures.
+- **Key Learnings**: Parametrized Quantum Circuits, Vision Transformer, Convolutional Transformers, Adversarial Attacks.
 
 ### Course-Related Projects
 - **Description**: This folder contains all the required and elective projects I completed during my studies.
