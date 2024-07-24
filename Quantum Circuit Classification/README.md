@@ -67,6 +67,7 @@ This project includes comprehensive Python scripts that address the behaviour an
 - Matplotlib
 - Seaborn
 - PyTorch
+- Einops
 
 
 ## How to Run
