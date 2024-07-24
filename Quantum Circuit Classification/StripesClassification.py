@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch
 from einops.layers.torch import Rearrange
-torch.manual_seed(42)
+torch.manual_seed(42) 
 np.random.seed(42)
 ## 0. Define Vision Transformer and Convolutional Vision Transformer
 class PatchEmbedding(nn.Module):
@@ -264,7 +264,7 @@ def train_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray,
         print(f"Epoch {epoch+1}: Cost = {cost}")
     return params
 
-def test_quantum_model(data: np.ndarray, labels: np.ndarray, params: np.ndarray, override:bool = False, threshold=0.5, num_rep: int = 3):
+def test_quantum_model(data: np.ndarray, labels: np.ndarray, params: np.ndarray, override:bool = False, threshold=0.5, num_rep: int = 3) -> float:
     """
     Tests the quantum model and returns the accuracy using probabilities.
 
@@ -274,7 +274,7 @@ def test_quantum_model(data: np.ndarray, labels: np.ndarray, params: np.ndarray,
     - params (np.ndarray): Parameters of the quantum circuit
     - override (bool): Whether to override certain settings in the cost circuit
     - threshold (float): Threshold for the binary classification
-    - num_rep (int): Number of repetitions for the quantum circuit
+    - num_rep (int): Number of times each prediction is repeated, if override is True
     """
     features = [img.flatten() for img in data]
     predictions = [cost_circuit(f, params, not override)[1] for f in features] 
@@ -483,7 +483,7 @@ if __name__ == "__main__":
     AttentionClassifier = ViT()
     ConvAttClassifier = CVT()
 
-    ## Train without noise and test with noise
+    ## Train with minimal noise and test with high noise
     ## Classical models
     trained_MLP = train_classical_model(MLPclassifier, train_data, train_labels, epochs=epochs * 5)
     accuracy_MLP = test_classical_model(trained_MLP, test_data, test_labels)
