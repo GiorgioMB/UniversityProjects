@@ -15,10 +15,10 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Includes a Multi-Layer Perceptron (MLP), a Convolutional Neural Network (CNN), a Vision Transformer (ViT) and a Convolutional Transformer (CVT) for performance comparison.
   - Generates and evaluates adversarial examples using PGD (Projected Gradient Descent).
 - **Effectiveness**: 
-  - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical layers trained for five times the epochs, although it starts to overfit much earlier than the classical counterparts, with the exception of the the ViT and CVT, which were always overfitting, regardless of number of epochs or dataset size.
-  - Randomly choosing which qubit to compute the expected value from during training reduces the variance of the PQC accuracy. This robustness extends to adversarial attacks, with the PQC showing higher and more consistent performance under such conditions.
-  - Testing 100 times without a fixed seed demonstrated that the PQC, with only 24 parameters, consistently achieved performance comparable to classical models that have vastly more parameters—610, 2,576, and 101,954 respectively.
-  - Both random and deterministic methods outperform the classical layers on PGD adversarial attacks by a wide margin when testing, both with and without a fixed seed.
+  - When trained for few epochs, the Parametrized Quantum Circuit (PQC) achieves reasonable performance comparable to that of classical models trained for five times the epochs, although it starts to overfit much earlier than the classical counterparts.
+  - Incorporating auxiliary qubits dedicated solely to facilitating entanglement significantly enhances the performance of the model, yielding an average accuracy improvement of 32% when half of the qubits serve as ancillaries. Conversely, when no ancillary qubits are utilized, employing random sampling modestly boosts the model's accuracy, with an observed average increase of 6%.
+  - Testing 100 times without a fixed seed demonstrated that the PQC, with only 48 parameters, consistently achieved performance comparable to classical models that have vastly more parameters—610, 2,576, 101,954 and 301826 respectively.
+  - A PQC where half the qubits are ancillaries significantly outperforms the classical model on PGD adversarial attacks by a wide margin when testing, both with and without a fixed seed.
 
 **Figure 1**: The Optimized Ansatz for This Problem
 ![Optimized Ansatz](CircuitStripes.png)
