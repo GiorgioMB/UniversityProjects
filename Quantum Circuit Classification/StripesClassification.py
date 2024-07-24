@@ -521,7 +521,7 @@ if __name__ == "__main__":
 
     ## Visualizing the quantum circuit and saving the image
     plt.rcParams.update({'font.size': 12, 'font.family': 'serif'})
-    fig, ax = qml.draw_mpl(draw_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(train_data[0].flatten(), trained_params)
+    fig, ax = qml.draw_mpl(draw_circuit, style = "black_white", expansion_strategy="device", show_all_wires=True, decimals = 2)(train_data[0].flatten(), trained_params_det)
     if save_image:
         fig.savefig("CircuitStripes.png", dpi = 600)
     plt.show()
