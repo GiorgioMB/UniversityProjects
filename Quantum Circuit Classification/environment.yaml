@@ -1,4 +1,4 @@
-name: quantum_classification
+name: quantum_circuit_classification
 channels:
   - defaults
   - conda-forge
