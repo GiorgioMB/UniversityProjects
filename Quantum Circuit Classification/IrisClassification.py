@@ -1,43 +1,48 @@
 from sklearn.datasets import load_iris
 import numpy as np
 from pennylane import numpy as qnp
-from pennylane.measurements import ExpectationMP
+from pennylane.measurements import ProbabilityMP
 import matplotlib.pyplot as plt
 from torch import nn
 import pennylane as qml
 import torch
-import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
-torch.manual_seed(62101)
-np.random.seed(62101)
-qnp.random.seed(62101)
+from typing import Union
+torch.manual_seed(3407)
+np.random.seed(3407)
+qnp.random.seed(3407)
 
 data = load_iris()
 X = data.data
 y = data.target
 X = X[y != 2]
 y = y[y != 2]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=62101)
+print(f"Number of data points: {len(X)}")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=3407)
 X_train = qnp.array(X_train)
 X_test = qnp.array(X_test)
 y_train = qnp.array(y_train)
 y_test = qnp.array(y_test)
-num_qubits = np.log2(X_train.shape[1]).astype(int)
+num_qubits = 2 * np.log2(X_train.shape[1]).astype(int)
 dev = qml.device("default.qubit", wires=num_qubits)
 
 ## Define the quantum circuit
-def quantum_circuit(features:qnp.ndarray, params:qnp.ndarray, qubit_to_sample: int) -> ExpectationMP:
+def quantum_circuit(features:qnp.ndarray, params:qnp.ndarray, qubit_to_sample: int, qubits_to_encode:Union[range, list]) -> ProbabilityMP:
     """
     Returns the expectation value of the Pauli-Z operator on the qubit specified by qubit_to_sample
-    - features (qnp.ndarray): Iqnput features to the quantum circuit
+    - features (qnp.ndarray): Input features to the quantum circuit
     - params (qnp.ndarray): Parameters of the quantum circuit
     - qubit_to_sample (int): Qubit to sample from the quantum circuit
+    - qubits_to_encode (Union[range, list]): Qubits to encode the input features
     """
     if qubit_to_sample >= num_qubits:
         raise ValueError("The qubit to sample must be less than the number of qubits")
-    qml.AmplitudeEmbedding(features, wires=range(num_qubits), normalize=True)
+    qml.AmplitudeEmbedding(features, wires=qubits_to_encode, normalize=True)
+    for qubit in range(num_qubits):
+        if qubit not in qubits_to_encode:
+            qml.Hadamard(wires=qubit)
     qml.StronglyEntanglingLayers(params, wires=range(num_qubits))
-    return qml.expval(qml.PauliZ(qubit_to_sample))
+    return qml.probs(wires=qubit_to_sample)
 
 @qml.qnode(dev)
 def cost_circuit(features:qnp.ndarray, params:qnp.ndarray, testing:bool = False) -> float:
@@ -45,15 +50,17 @@ def cost_circuit(features:qnp.ndarray, params:qnp.ndarray, testing:bool = False)
     Executes the quantum circuit and returns the expectation value of the Pauli-Z operator on the first qubit or a random qubit, depending on the testing parameter
     
     Arguments:
-    - features (qnp.ndarray): Iqnput features to the quantum circuit
+    - features (qnp.ndarray): Input features to the quantum circuit
     - params (qnp.ndarray): Parameters of the quantum circuit
     - testing (bool): Whether the model is being tested or not (ie if only one qubit should be used)
     """
     if testing: qubit_to_sample = 0
     else: qubit_to_sample = qnp.random.randint(num_qubits)
+    if testing: qubits_to_encode = range(int(num_qubits / 2))
+    else: qubits_to_encode = qnp.random.choice(num_qubits, size = int(num_qubits/2), replace=False).tolist()
     ##Uncomment the line below to see the qubit being sampled
     ##print(f"Sampling for qubit: {qubit_to_sample + 1}")
-    return quantum_circuit(features, params, qubit_to_sample)
+    return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
 @qml.qnode(dev)
 def draw_circuit(features:qnp.ndarray, params:qnp.ndarray) -> float:
@@ -61,24 +68,18 @@ def draw_circuit(features:qnp.ndarray, params:qnp.ndarray) -> float:
     Executes the quantum circuit and returns the expectation value of the Pauli-Z operator on the first qubit, for visualization purposes
     
     Arguments:
-    - features (qnp.ndarray): Iqnput features to the quantum circuit
+    - features (qnp.ndarray): Input features to the quantum circuit
     - params (qnp.ndarray): Parameters of the quantum circuit
     """
     qubit_to_sample = 0
-    return quantum_circuit(features, params, qubit_to_sample)
+    qubits_to_encode = range(int(num_qubits / 2))
+    return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
+## 4. Define the cost function and optimizer
 
-## Define the activation function and cost function
-def sigmoid(x:qnp.ndarray) -> qnp.ndarray:
+def cost_function(params: qnp.ndarray, features: qnp.ndarray, labels: qnp.ndarray, not_random: bool) -> float:
     """
-    Sigmoid activation function: f(x) = 1 / (1 + exp(-x))
-    Maps any real value into the range (0, 1), suitable for binary classification.
-    """
-    return 1 / (1 + qnp.exp(-x))
-
-def cost_function(params:qnp.ndarray, features:qnp.ndarray, labels:qnp.ndarray, not_random:bool) -> float:
-    """
-    Binary cross-entropy cost function for classification
+    Binary cross-entropy cost function for classification using probabilities directly from the quantum circuit.
 
     Arguments:
     - params (qnp.ndarray): Parameters of the quantum circuit
@@ -88,45 +89,57 @@ def cost_function(params:qnp.ndarray, features:qnp.ndarray, labels:qnp.ndarray, 
     """
     loss = 0.0
     for f, label in zip(features, labels):
-        logits = cost_circuit(f, params, not_random)  # ensure cost_circuit outputs logits
-        prediction = sigmoid(logits)       # apply sigmoid to convert logits to probabilities
-        loss += -label * qnp.log(prediction + 1e-9) - (1 - label) * qnp.log(1 - prediction + 1e-9)  # 1e-9 for numerical stability
+        probabilities = cost_circuit(f, params, not_random)
+        probability = probabilities[0]  # Probability of the '0' state, which we map to label 0
+        loss += -label * qnp.log(probability + 1e-9) - (1 - label) * qnp.log(1 - probability + 1e-9)
     loss = loss / len(features)
     return loss
+optimizer = qml.AdamOptimizer(stepsize=0.0001, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
 
-
-## Define the training and testing functions for the quantum model
-optimizer = qml.AdamOptimizer(stepsize=0.01, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
-def train_quantum_model(features:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray, epochs=10, deterministic:bool = False) -> qnp.ndarray:
+## 5. Define the training and testing functions
+def train_quantum_model(data:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray, 
+                        epochs=10, deterministic:bool = False) -> qnp.ndarray:
     """
     Trains the quantum model using the cost function and optimizer
 
     Arguments:
-    - features (qnp.ndarray): Feature matrix to train
+    - data (qnp.ndarray): Image data to train
     - labels (qnp.ndarray): Labels corresponding to the image data
     - params (qnp.ndarray): Parameters of the quantum circuit
     - epochs (int): Number of epochs to train the model
     - deterministic (bool): Whether to sample the same qubit each time or not
     """
+    features = [img.flatten() for img in data] ## Simple flattening of the image data
     for epoch in range(epochs):
         params, cost = optimizer.step_and_cost(lambda p: cost_function(p, features, labels, deterministic), params)
-        print(f"Epoch {epoch+1}: Cost = {cost:.4f}")
+        print(f"Epoch {epoch+1}: Cost = {cost}")
     return params
 
-def test_quantum_model(features:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray, override: bool = False) -> float:
+def test_quantum_model(data: qnp.ndarray, labels: qnp.ndarray, params: qnp.ndarray, override:bool = False, threshold=0.5, num_rep: int = 3) -> float:
     """
-    Tests the quantum model and returns the accuracy
+    Tests the quantum model and returns the accuracy using probabilities.
 
     Arguments:
-    - features (qnp.ndarray): Feature matrix to test
+    - data (qnp.ndarray): Image data to test
     - labels (qnp.ndarray): Labels corresponding to the image data
     - params (qnp.ndarray): Parameters of the quantum circuit
-    - override (bool): Whether to override the testing setting and sample random qubits
+    - override (bool): Whether to override certain settings in the cost circuit
+    - threshold (float): Threshold for the binary classification
+    - num_rep (int): Number of times each prediction is repeated, if override is True
     """
-    raw_logits = [cost_circuit(f, params, testing = (not override)) for f in features]
-    accuracy = qnp.mean([(qnp.sign(pred) != lab) for pred, lab in zip(raw_logits, labels)])
-    return accuracy
-
+    features = [img.flatten() for img in data]
+    predictions = [cost_circuit(f, params, not override)[1] for f in features] 
+    if override:
+        predictions = []
+        for i in range(num_rep):
+            new_pred = [cost_circuit(f, params, not override)[1] for f in features]
+            predictions.append(new_pred)
+        predictions = qnp.array(predictions).mean(axis=0)
+        predictions = (predictions > threshold).astype(int)
+    else:
+        predictions = (qnp.array(predictions) > threshold).astype(int) 
+    accuracy = qnp.mean(predictions != labels)
+    return accuracy.numpy()
 
 ## Define the training and testing functions for the classical model
 def train_classical_model(model:nn.Module, features:np.ndarray, labels:np.ndarray, epochs:int=10) -> nn.Module:
@@ -169,7 +182,7 @@ def test_classical_model(model: nn.Module, features:np.ndarray, labels:np.ndarra
         outputs = model(features)
         predictions = torch.argmax(outputs, dim=1)
     accuracy = torch.mean((predictions == torch.tensor(labels)).float())
-    return accuracy
+    return accuracy.numpy()
 
 ## Define the function to generate adversarial examples
 def generate_pgd_adversarial_example_classical(model:nn.Module, features:qnp.ndarray, labels:qnp.ndarray, epsilon:float=2, alpha:float=0.01, num_iter:int=50) -> qnp.ndarray:
@@ -226,9 +239,7 @@ def generate_pgd_adversarial_example_quantum(params:qnp.ndarray, features:qnp.nd
     for i in range(num_iter):
         optimizer = torch.optim.Adam([features], lr=0.01, betas=(0.9, 0.999), eps=1e-8)
         optimizer.zero_grad()
-        outputs = nn.Sigmoid()(cost_circuit(features, params, testing=True))
-        outputs = torch.cat((outputs, 1 - outputs), dim=0)
-        outputs = outputs.view(-1, 2)
+        outputs = cost_circuit(features, params, testing=True)
         loss = nn.CrossEntropyLoss()(outputs, labels)
         loss.backward()
         
@@ -240,20 +251,20 @@ def generate_pgd_adversarial_example_quantum(params:qnp.ndarray, features:qnp.nd
     return qnp.array([f.detach().numpy() for f in features])
 
 ## Main execution
-num_layers = 2
-epochs = 2
+num_layers = 4
+epochs = 3
 params = qnp.random.random((num_layers, num_qubits, 3))
 print("-----------------------------------")
 print("Quantum Model Training...")
-params = train_quantum_model(X_train, y_train, params, epochs=epochs)
+params = train_quantum_model(X_train, y_train, params, epochs=epochs, deterministic = True)
 print("Quantum Model Trained, Testing...")
 accuracy_quantum = test_quantum_model(X_test, y_test, params)
 print(f"Accuracy of the Parametrized Quantum Circuit: {accuracy_quantum*100:.2f}%")
 print(f"Number of parameters in the quantum model: {len(params.flatten())}")
 classical_model = nn.Sequential(
-    nn.Linear(X_train.shape[1], 16),
+    nn.Linear(X_train.shape[1], 32),
     nn.ReLU(),
-    nn.Linear(16, 2),
+    nn.Linear(32, 2),
     nn.Sigmoid()
 )
 print("-----------------------------------")
@@ -272,7 +283,7 @@ print(f"Accuracy of the Classical Model on the Adversarial Example: {accuracy_cl
 print(f"Accuracy of the Quantum Model on the Adversarial Example: {accuracy_quantum_adv*100:.2f}%")
 print(f"Drop in accuracy for the Classical Model: {(accuracy_classic - accuracy_classic_adv)*100:.2f}%")
 print(f"Drop in accuracy for the Quantum Model: {(accuracy_quantum - accuracy_quantum_adv)*100:.2f}%")
-print(f"Difference in accuracy between the Classical and Quantum Model: {abs(accuracy_classic_adv - accuracy_quantum_adv)*100:.2f}%\nIs the quantum model more robust? {accuracy_quantum_adv >= accuracy_classic_adv}")
+print(f"Difference in accuracy between the Classical and Quantum Model: {abs(float(accuracy_classic_adv) - float(accuracy_quantum_adv))*100:.2f}%\nIs the quantum model more robust? {accuracy_quantum_adv >= accuracy_classic_adv}")
 accuracy_quantum_random = test_quantum_model(adversarial_example_quantum, y_test, params, override=True)
 print("-----------------------------------")
 print(f"Accuracy of the Quantum Model on the Adversarial Example: {accuracy_quantum_random*100:.2f}% (Random Qubit Sampling)")
