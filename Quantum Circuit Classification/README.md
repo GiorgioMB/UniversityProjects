@@ -38,9 +38,9 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Initial `Conv2d` layers perform classical convolution and pooling, reducing image dimensions while preserving essential features.
   - Extracted features are then processed through a quantum circuit, leveraging quantum mechanical properties for classification.
 - **Effectiveness**: 
-  - The PQC demonstrates a substantial performance advantage over the traditional linear classifier, having a 46% higher accuracy.
-  - Extensive testing, conducted 100 times without a fixed seed, reveals that the PQC maintains a more consistent test accuracy ranging from 60% to 100%. In contrast, the linear classifier exhibits greater variability in performance and less robustness, with accuracies spanning from a minimum of 38% to a maximum of 100%.
-  - This example proves that PQCs can effectively replace a linear layer even when the data is processed through classical machine learning layers, showcasing their versatility and robustness in diverse machine learning pipelines.
+  - The PQC demonstrates similar performance to a traditional MLP, however with 4 times less number of parameters.
+  - Extensive testing, conducted 100 times without a fixed seed, reveals that the PQC maintains a more consistent test accuracy ranging from 60% to 100%. In contrast, the MLP classifier exhibits greater variability in performance and less robustness, with accuracies spanning from a minimum of 38% to a maximum of 100%.
+  - This example proves that PQCs can effectively replace a MLP even when the data is processed through classical machine learning layers, showcasing their versatility and robustness in diverse machine learning pipelines.
 
 **Figure 2**: The Optimized Ansatz for This Problem
 ![Optimized Ansatz](CircuitDigits.png)
