@@ -54,10 +54,10 @@ This project includes comprehensive Python scripts that address the behaviour an
   - Evaluates the effectiveness of random versus deterministic sampling methods in quantum circuits during testing. 
 - **Effectiveness**: 
   - The quantum model exhibited performance similar, or superior, to a model with 10 times the parameters and trained for 5 times the number of epochs
-  - The quantum model is severely prone to overfitting if more epochs/layers are used
+  - The quantum model is somewhat prone to overfitting if more epochs/layers are used
   - Comparative testing, performed 100 times without a fixed seed, indicates that the quantum model frequently matches or exceeds the performance of the classical model, particularly under adversarial conditions.
-  - Introducing randomness in the qubit sampling during the training phase of the quantum model reduces variance in its accuracy, albeit the mean and median accuracy were sligthly slower when run 100 times without seed setting.
-  - Introducing randomness in the qubit sampling during the testing phase of the quantum model reduces variance in its accuracy under adversarial conditions and marginally improves accuracy.
+  - Introducing randomness in the qubit sampling during the training phase of the quantum model reduces variance in its accuracy, albeit the improvement is still extremely marginal if compared to the margin gained by adding more ancillary qubits
+  - While the quantum model is highly effective, the predictions it generates need to be flipped to match the correct labels.
 
 **Figure 3**: The Optimized Ansatz for This Problem
 ![Optimized Ansatz](CircuitIris.png)
