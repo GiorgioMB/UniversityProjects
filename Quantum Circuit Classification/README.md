@@ -63,7 +63,7 @@ This project includes comprehensive Python scripts that address the behaviour an
 ![Optimized Ansatz](CircuitIris.png)
 
 ### TitanicClassification.py
-- **Purpose**: Implements a PQC to classify the whether individuals on the titanic survived or not
+- **Purpose**: Implements a PQC to classify the whether individuals on the titanic survived or not, checking how PQCs handle datasets whose size is not a power of 2.
 - **Key Features**:
   - Downloads from Kaggle and preprocesses the Dataset by one hot encoding and removing observations with NAs in them.
   - Implements both a quantum circuit and a classical neural network to perform the classification.
