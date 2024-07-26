@@ -50,7 +50,7 @@ This project includes comprehensive Python scripts that address the behaviour an
 - **Key Features**:
   - Preprocesses the Iris dataset by removing one species to simplify it into a binary classification task.
   - Implements both a quantum circuit and a classical neural network to perform the classification.
-  - Trains, tests, and compares the performance of quantum and classical models under various conditions, including handling adversarial examples.
+  - Trains, tests, and compares the performance of quantum and an MLP under normal and adversarial examples.
   - Evaluates the effectiveness of random versus deterministic sampling methods in quantum circuits during testing. 
 - **Effectiveness**: 
   - The quantum model exhibited performance similar, or superior, to a model with 10 times the parameters and trained for 5 times the number of epochs
@@ -61,6 +61,21 @@ This project includes comprehensive Python scripts that address the behaviour an
 
 **Figure 3**: The Optimized Ansatz for This Problem
 ![Optimized Ansatz](CircuitIris.png)
+
+### TitanicClassification.py
+- **Purpose**: Implements a PQC to classify the whether individuals on the titanic survived or not
+- **Key Features**:
+  - Downloads from Kaggle and preprocesses the Dataset by one hot encoding and removing observations with NAs in them.
+  - Implements both a quantum circuit and a classical neural network to perform the classification.
+  - Trains, tests, and compares the performance of quantum and an MLP under normal and adversarial examples.
+- **Effectiveness**: 
+  - The quantum model exhibited performance similar to a model with 30 times the parameters and trained for 5 times the number of epochs, with an average performance loss of 5%
+  - The quantum model is somewhat prone to overfitting if more epochs/layers are used
+  - Comparative testing, performed 100 times without a fixed seed, indicates that the quantum model frequently matches or comes very close to the performance of the classical model, particularly under adversarial conditions.
+
+**Figure 3**: The Optimized Ansatz for This Problem
+![Optimized Ansatz](CircuitTitanic.png)
+
 ## Libraries Used
 - PennyLane
 - NumPy
