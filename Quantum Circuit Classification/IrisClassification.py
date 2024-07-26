@@ -29,7 +29,7 @@ dev = qml.device("default.qubit", wires=num_qubits)
 ## Define the quantum circuit
 def quantum_circuit(features:qnp.ndarray, params:qnp.ndarray, qubit_to_sample: int, qubits_to_encode:Union[range, list]) -> ProbabilityMP:
     """
-    Returns the expectation value of the Pauli-Z operator on the qubit specified by qubit_to_sample
+    Returns the probability values of the Pauli-Z operator on the qubit specified by qubit_to_sample
     - features (qnp.ndarray): Input features to the quantum circuit
     - params (qnp.ndarray): Parameters of the quantum circuit
     - qubit_to_sample (int): Qubit to sample from the quantum circuit
