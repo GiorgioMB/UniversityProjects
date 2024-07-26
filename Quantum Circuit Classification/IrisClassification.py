@@ -83,14 +83,14 @@ def cost_function(params: qnp.ndarray, features: qnp.ndarray, labels: qnp.ndarra
 
     Arguments:
     - params (qnp.ndarray): Parameters of the quantum circuit
-    - features (qnp.ndarray): Image data to train
-    - labels (qnp.ndarray): Labels corresponding to the image data
+    - features (qnp.ndarray): Data to train
+    - labels (qnp.ndarray): Labels corresponding to the data
     - not_random (bool): Whether to sample the same qubit each time or not
     """
     loss = 0.0
     for f, label in zip(features, labels):
         probabilities = cost_circuit(f, params, not_random)
-        probability = probabilities[0]  # Probability of the '0' state, which we map to label 0
+        probability = probabilities[1]  # Probability of the '0' state, which we map to label 0
         loss += -label * qnp.log(probability + 1e-9) - (1 - label) * qnp.log(1 - probability + 1e-9)
     loss = loss / len(features)
     return loss
@@ -103,13 +103,13 @@ def train_quantum_model(data:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray
     Trains the quantum model using the cost function and optimizer
 
     Arguments:
-    - data (qnp.ndarray): Image data to train
-    - labels (qnp.ndarray): Labels corresponding to the image data
+    - data (qnp.ndarray): Data to train
+    - labels (qnp.ndarray): Labels corresponding to the data
     - params (qnp.ndarray): Parameters of the quantum circuit
     - epochs (int): Number of epochs to train the model
     - deterministic (bool): Whether to sample the same qubit each time or not
     """
-    features = [img.flatten() for img in data] ## Simple flattening of the image data
+    features = data
     for epoch in range(epochs):
         params, cost = optimizer.step_and_cost(lambda p: cost_function(p, features, labels, deterministic), params)
         print(f"Epoch {epoch+1}: Cost = {cost}")
@@ -120,14 +120,14 @@ def test_quantum_model(data: qnp.ndarray, labels: qnp.ndarray, params: qnp.ndarr
     Tests the quantum model and returns the accuracy using probabilities.
 
     Arguments:
-    - data (qnp.ndarray): Image data to test
-    - labels (qnp.ndarray): Labels corresponding to the image data
+    - data (qnp.ndarray): data to test
+    - labels (qnp.ndarray): Labels corresponding to the data
     - params (qnp.ndarray): Parameters of the quantum circuit
     - override (bool): Whether to override certain settings in the cost circuit
     - threshold (float): Threshold for the binary classification
     - num_rep (int): Number of times each prediction is repeated, if override is True
     """
-    features = [img.flatten() for img in data]
+    features = data
     predictions = [cost_circuit(f, params, not override)[1] for f in features] 
     if override:
         predictions = []
@@ -149,7 +149,7 @@ def train_classical_model(model:nn.Module, features:np.ndarray, labels:np.ndarra
     Arguments:
     - model (torch.nn.Module): Model to train
     - features (qnp.ndarray): Feature matrix to train
-    - labels (qnp.ndarray): Labels corresponding to the image data
+    - labels (qnp.ndarray): Labels corresponding to the data
     - epochs (int): Number of epochs to train the model
     """
     criterion = nn.CrossEntropyLoss()
@@ -174,7 +174,7 @@ def test_classical_model(model: nn.Module, features:np.ndarray, labels:np.ndarra
     Arguments:
     - model (torch.nn.Module): Trained model
     - features (qnp.ndarray): Feature matrix to test
-    - labels (qnp.ndarray): Labels corresponding to the image data
+    - labels (qnp.ndarray): Labels corresponding to the data
     """
     features = torch.tensor(features.numpy(), dtype=torch.float32)
     model.eval()
@@ -194,10 +194,10 @@ def generate_pgd_adversarial_example_classical(model:nn.Module, features:qnp.nda
     Arguments:
     - model (torch.nn.Module): Trained model
     - features (qnp.ndarray): Feature matrix to generate adversarial examples
-    - labels (qnp.ndarray): Labels corresponding to the image data
-    - epsilon (float): Maximum perturbation allowed (default: 0.2)
+    - labels (qnp.ndarray): Labels corresponding to the data
+    - epsilon (float): Maximum perturbation allowed (default: 2)
     - alpha (float): Step size for the perturbation (default: 0.01)
-    - num_iter (int): Number of iterations for the PGD algorithm (default: 30)
+    - num_iter (int): Number of iterations for the PGD algorithm (default: 50)
     """
     features = torch.tensor(features.numpy(), dtype=torch.float32)
     labels = torch.tensor(labels, dtype=torch.long)
@@ -227,9 +227,9 @@ def generate_pgd_adversarial_example_quantum(params:qnp.ndarray, features:qnp.nd
     - params (qnp.ndarray): Parameters of the quantum circuit
     - features (qnp.ndarray): Feature matrix to generate adversarial examples
     - labels (qnp.ndarray): Labels corresponding to the image data
-    - epsilon (float): Maximum perturbation allowed (default: 0.2)
+    - epsilon (float): Maximum perturbation allowed (default: 2)
     - alpha (float): Step size for the perturbation (default: 0.01)
-    - num_iter (int): Number of iterations for the PGD algorithm (default: 30)
+    - num_iter (int): Number of iterations for the PGD algorithm (default: 50)
     """
     features = torch.tensor(features.numpy(), dtype=torch.float32)
     labels = torch.tensor(labels, dtype=torch.long)
