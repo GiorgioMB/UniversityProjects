@@ -73,7 +73,7 @@ This project includes comprehensive Python scripts that address the behaviour an
   - The quantum model is somewhat prone to overfitting if more epochs/layers are used
   - Comparative testing, performed 100 times without a fixed seed, indicates that the quantum model frequently matches or comes very close to the performance of the classical model, particularly under adversarial conditions.
 
-**Figure 3**: The Optimized Ansatz for This Problem
+**Figure 4**: The Optimized Ansatz for This Problem
 ![Optimized Ansatz](CircuitTitanic.png)
 
 ## Libraries Used
