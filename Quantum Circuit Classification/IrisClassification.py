@@ -226,7 +226,7 @@ def generate_pgd_adversarial_example_quantum(params:qnp.ndarray, features:qnp.nd
     Arguments:
     - params (qnp.ndarray): Parameters of the quantum circuit
     - features (qnp.ndarray): Feature matrix to generate adversarial examples
-    - labels (qnp.ndarray): Labels corresponding to the image data
+    - labels (qnp.ndarray): Labels corresponding to the data
     - epsilon (float): Maximum perturbation allowed (default: 2)
     - alpha (float): Step size for the perturbation (default: 0.01)
     - num_iter (int): Number of iterations for the PGD algorithm (default: 50)
