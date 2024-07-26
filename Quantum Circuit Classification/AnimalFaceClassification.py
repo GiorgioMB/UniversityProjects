@@ -73,7 +73,6 @@ for i in range(3):
     plt.title(classes[i])
     plt.show()
 
-
 num_qubits = 2 * int(np.log2(128))
 dev = qml.device("default.qubit", wires=num_qubits)
 @qml.qnode(dev, interface='torch')
