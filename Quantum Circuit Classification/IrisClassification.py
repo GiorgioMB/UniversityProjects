@@ -26,7 +26,6 @@ y_test = qnp.array(y_test)
 num_qubits = 2 * np.log2(X_train.shape[1]).astype(int)
 dev = qml.device("default.qubit", wires=num_qubits)
 
-## Define the quantum circuit
 def quantum_circuit(features:qnp.ndarray, params:qnp.ndarray, qubit_to_sample: int, qubits_to_encode:Union[range, list]) -> ProbabilityMP:
     """
     Returns the probability values of the Pauli-Z operator on the qubit specified by qubit_to_sample
@@ -58,8 +57,6 @@ def cost_circuit(features:qnp.ndarray, params:qnp.ndarray, testing:bool = False)
     else: qubit_to_sample = qnp.random.randint(num_qubits)
     if testing: qubits_to_encode = range(int(num_qubits / 2))
     else: qubits_to_encode = qnp.random.choice(num_qubits, size = int(num_qubits/2), replace=False).tolist()
-    ##Uncomment the line below to see the qubit being sampled
-    ##print(f"Sampling for qubit: {qubit_to_sample + 1}")
     return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
 @qml.qnode(dev)
@@ -75,7 +72,6 @@ def draw_circuit(features:qnp.ndarray, params:qnp.ndarray) -> float:
     qubits_to_encode = range(int(num_qubits / 2))
     return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
-## 4. Define the cost function and optimizer
 
 def cost_function(params: qnp.ndarray, features: qnp.ndarray, labels: qnp.ndarray, not_random: bool) -> float:
     """
@@ -96,7 +92,6 @@ def cost_function(params: qnp.ndarray, features: qnp.ndarray, labels: qnp.ndarra
     return loss
 optimizer = qml.AdamOptimizer(stepsize=0.0001, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
 
-## 5. Define the training and testing functions
 def train_quantum_model(data:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray, 
                         epochs=10, deterministic:bool = False) -> qnp.ndarray:
     """
@@ -141,7 +136,6 @@ def test_quantum_model(data: qnp.ndarray, labels: qnp.ndarray, params: qnp.ndarr
     accuracy = qnp.mean(predictions != labels)
     return accuracy.numpy()
 
-## Define the training and testing functions for the classical model
 def train_classical_model(model:nn.Module, features:np.ndarray, labels:np.ndarray, epochs:int=10) -> nn.Module:
     """
     Trains the classical model using the mean squared error loss
@@ -184,7 +178,6 @@ def test_classical_model(model: nn.Module, features:np.ndarray, labels:np.ndarra
     accuracy = torch.mean((predictions == torch.tensor(labels)).float())
     return accuracy.numpy()
 
-## Define the function to generate adversarial examples
 def generate_pgd_adversarial_example_classical(model:nn.Module, features:qnp.ndarray, labels:qnp.ndarray, epsilon:float=2, alpha:float=0.01, num_iter:int=50) -> qnp.ndarray:
     """
     Generate adversarial examples using Projected Gradient Descent for the classical model
@@ -250,7 +243,6 @@ def generate_pgd_adversarial_example_quantum(params:qnp.ndarray, features:qnp.nd
         features.requires_grad = True
     return qnp.array([f.detach().numpy() for f in features])
 
-## Main execution
 num_layers = 4
 epochs = 3
 params = qnp.random.random((num_layers, num_qubits, 3))
