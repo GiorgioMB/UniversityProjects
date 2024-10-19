@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch
 from einops.layers.torch import Rearrange
-torch.manual_seed(42) 
+torch.manual_seed(3407) ## This seed was seen as best for torch models in "Torch.manual_seed(3407) is all you need", Picard, 2021
 np.random.seed(42)
 class PatchEmbedding(nn.Module):
     def __init__(self, in_channels=1, patch_size=4, emb_size=64, dropout=0.1):
