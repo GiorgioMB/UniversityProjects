@@ -110,7 +110,6 @@ def draw_circuit(features:qnp.ndarray, params:qnp.ndarray) -> float:
     qubits_to_encode = range(int(num_qubits / 2))
     return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
-## 4. Define the cost function and optimizer
 
 def cost_function(params: qnp.ndarray, features: qnp.ndarray, labels: qnp.ndarray, not_random: bool) -> float:
     """
@@ -131,7 +130,6 @@ def cost_function(params: qnp.ndarray, features: qnp.ndarray, labels: qnp.ndarra
     return loss
 optimizer = qml.AdamOptimizer(stepsize=0.0001, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
 
-## 5. Define the training and testing functions
 def train_quantum_model(data:qnp.ndarray, labels:qnp.ndarray, params:qnp.ndarray, 
                         epochs=10, deterministic:bool = False) -> qnp.ndarray:
     """
