@@ -58,7 +58,7 @@ for epoch in range(epochs_train):
     optimizer.step()
     new_X = model.cout.detach().numpy()
 
-
+###############
 print("Convolutional Features Retrieved, Training QML Model...")
 num_qubits = int(2 * np.log2(new_X.shape[1]))
 dev = qml.device("default.qubit", wires=num_qubits)
@@ -70,8 +70,6 @@ def quantum_circuit(features:qnp.ndarray, params:qnp.ndarray, qubit_to_sample: i
     - qubit_to_sample (int): Qubit to sample from the quantum circuit
     - qubits_to_encode (Union[range, list]): Qubits to encode the input features
     """
-    if qubit_to_sample >= num_qubits:
-        raise ValueError("The qubit to sample must be less than the number of qubits")
     qml.AmplitudeEmbedding(features, wires=qubits_to_encode, normalize=True)
     for qubit in range(num_qubits):
         if qubit not in qubits_to_encode:
@@ -93,8 +91,6 @@ def cost_circuit(features:qnp.ndarray, params:qnp.ndarray, testing:bool = False)
     else: qubit_to_sample = qnp.random.randint(num_qubits)
     if testing: qubits_to_encode = range(int(num_qubits / 2))
     else: qubits_to_encode = qnp.random.choice(num_qubits, size = int(num_qubits/2), replace=False).tolist()
-    ##Uncomment the line below to see the qubit being sampled
-    ##print(f"Sampling for qubit: {qubit_to_sample + 1}")
     return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
 @qml.qnode(dev)
@@ -173,7 +169,7 @@ def test_quantum_model(data: qnp.ndarray, labels: qnp.ndarray, params: qnp.ndarr
         predictions = (qnp.array(predictions) > threshold).astype(int) 
     accuracy = qnp.mean(predictions == labels)
     return accuracy
-
+##################
 qdata = qnp.array(new_X)
 qlabels = qnp.array(y)
 qdata_train, qdata_test, qlabels_train, qlabels_test = train_test_split(qdata, qlabels, test_size=0.2, random_state=3407)
