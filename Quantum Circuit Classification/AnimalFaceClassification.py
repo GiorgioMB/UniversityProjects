@@ -215,9 +215,7 @@ ViT.patch_embed.proj = new_first_conv
 ViT.head = nn.Linear(ViT.head.in_features, 3)
 ViT.to(device)
 Hybrid_PQC = QMLP(128, 3, 6, 4).to(device)
-##clone the starting parameters
 starting_qparams = Hybrid_PQC.quantum_params.clone()
-##Print the number of parameters in each model
 print(f"Number of Parameters in MLP: {sum(p.numel() for p in MLP.parameters())}")
 print(f"Number of Parameters in CNN: {sum(p.numel() for p in CNN.parameters())}")
 print(f"Number of Parameters in CVT: {sum(p.numel() for p in CVT.parameters())}")
