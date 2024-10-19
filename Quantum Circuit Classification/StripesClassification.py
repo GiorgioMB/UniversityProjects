@@ -10,7 +10,6 @@ import torch
 from einops.layers.torch import Rearrange
 torch.manual_seed(42) 
 np.random.seed(42)
-## 0. Define Vision Transformer and Convolutional Vision Transformer
 class PatchEmbedding(nn.Module):
     def __init__(self, in_channels=1, patch_size=4, emb_size=64, dropout=0.1):
         super().__init__()
@@ -104,7 +103,7 @@ class CVT(nn.Module):
         x = self.to_cls_token(x[:, 0])
 
         return self.mlp_head(x)
-## 1. Generate synthetic binary image data
+
 def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,  
                 noise_level: float = 0.1, noise_type = "uniform") -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -135,7 +134,7 @@ def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,
     vertical_indices = np.where(labels == 1)[0]
     data[vertical_indices, :, ::2] = 1
     
-    if noise: ## Add noise to the data
+    if noise: 
         if noise_type == "uniform":
            noise = np.random.uniform(low = -noise_level, high = noise_level, size = (num_samples, size, size))
         elif noise_type == "normal":
@@ -145,7 +144,7 @@ def generate_data(num_samples: int = 100, size: int = 4, noise: bool = False,
         data += noise
     return data, labels
 
-## 2. Visualize the generated data
+
 def visualize_data(data: np.ndarray = None, labels: np.ndarray = None, 
                     max_samples: int = 10, title:str = None) -> plt.figure:
     """
@@ -173,7 +172,7 @@ def visualize_data(data: np.ndarray = None, labels: np.ndarray = None,
     plt.show()
     return fig
 
-## 3. Define the quantum circuit
+
 num_qubits = 8
 dev = qml.device("default.qubit", wires=num_qubits)
 def quantum_circuit(features:np.ndarray, params:np.ndarray, qubit_to_sample: int, qubits_to_encode:Union[range, list]) -> ProbabilityMP:
@@ -207,8 +206,6 @@ def cost_circuit(features:np.ndarray, params:np.ndarray, testing:bool = False) -
     else: qubit_to_sample = np.random.randint(num_qubits)
     if testing: qubits_to_encode = range(4)
     else: qubits_to_encode = np.random.choice(num_qubits, size = 4, replace=False).tolist()
-    ##Uncomment the line below to see the qubit being sampled
-    ##print(f"Sampling for qubit: {qubit_to_sample + 1}")
     return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
 @qml.qnode(dev)
@@ -224,7 +221,6 @@ def draw_circuit(features:np.ndarray, params:np.ndarray) -> float:
     qubits_to_encode = range(4)
     return quantum_circuit(features, params, qubit_to_sample, qubits_to_encode)
 
-## 4. Define the cost function and optimizer
 
 def cost_function(params: np.ndarray, features: np.ndarray, labels: np.ndarray, not_random: bool) -> float:
     """
@@ -245,7 +241,7 @@ def cost_function(params: np.ndarray, features: np.ndarray, labels: np.ndarray, 
     return loss
 optimizer = qml.AdamOptimizer(stepsize=0.01, beta1=0.9, beta2=0.999, eps=1e-8) ## Setting the optimizer to have the same behaviour between torch and pennylane
 
-## 5. Define the training and testing functions
+
 def train_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray, 
                         epochs=10, deterministic:bool = False) -> np.ndarray:
     """
@@ -258,7 +254,7 @@ def train_quantum_model(data:np.ndarray, labels:np.ndarray, params:np.ndarray,
     - epochs (int): Number of epochs to train the model
     - deterministic (bool): Whether to sample the same qubit each time or not
     """
-    features = [img.flatten() for img in data] ## Simple flattening of the image data
+    features = [img.flatten() for img in data]
     for epoch in range(epochs):
         params, cost = optimizer.step_and_cost(lambda p: cost_function(p, features, labels, deterministic), params)
         print(f"Epoch {epoch+1}: Cost = {cost}")
@@ -290,7 +286,7 @@ def test_quantum_model(data: np.ndarray, labels: np.ndarray, params: np.ndarray,
     accuracy = np.mean(predictions == labels)
     return accuracy
 
-## 6. Define training and testing functions for the classical model
+
 def train_classical_model(model:nn.Module, data:np.ndarray, labels:np.ndarray, 
                         epochs:int=10, flatten:bool = True, batching: bool = False, 
                         batch_size:int = 64) -> nn.Module:
@@ -378,7 +374,7 @@ def test_classical_model(model: nn.Module, data:np.ndarray, labels:np.ndarray,
     accuracy = torch.mean((predictions == torch.tensor(labels)).float())
     return accuracy
 
-## 7. Generate adversarial examples with Projected Gradient Descent
+
 def generate_pgd_adversarial_example_classical(model:nn.Module, data:np.ndarray, 
                                                 labels:np.ndarray, epsilon:float=0.5, 
                                                 alpha:float=0.1, num_iter:int=200, 
@@ -482,9 +478,6 @@ if __name__ == "__main__":
     )
     AttentionClassifier = ViT()
     ConvAttClassifier = CVT()
-
-    ## Train with minimal noise and test with high noise
-    ## Classical models
     trained_MLP = train_classical_model(MLPclassifier, train_data, train_labels, epochs=epochs * 5)
     accuracy_MLP = test_classical_model(trained_MLP, test_data, test_labels)
     print(f"Number of parameters in the MLP model: {sum(p.numel() for p in trained_MLP.parameters())}")
@@ -504,7 +497,6 @@ if __name__ == "__main__":
     accuracy_CVT = test_classical_model(trained_CVT, test_data.reshape(-1, 1, 4, 4), test_labels, flatten=False)
     print(f"Number of parameters in the Convolusional Vision Transformer model: {sum(p.numel() for p in trained_CVT.parameters())}")
     print(f"Accuracy of the CVT model: {accuracy_CVT*100:.2f}%")
-    ## Quantum model
     print("----------------------------")
     trained_params_det = train_quantum_model(train_data, train_labels, params, epochs=epochs, deterministic = True)
     accuracy_det = test_quantum_model(test_data, test_labels, trained_params_det)
@@ -526,7 +518,6 @@ if __name__ == "__main__":
         fig.savefig("CircuitStripes.png", dpi = 600)
     plt.show()
 
-    ## Generating adversarial examples
     low_noise_data, low_noise_labels = generate_data(num_samples=100, size=4, noise=True, noise_level=0.01, noise_type="normal")
     perturbed_MLP_features = generate_pgd_adversarial_example_classical(trained_MLP, low_noise_data, low_noise_labels)
     perturbed_CNN_features = generate_pgd_adversarial_example_classical(trained_CNN, low_noise_data.reshape(-1, 1, 4, 4), low_noise_labels, flatten=False)
@@ -535,7 +526,6 @@ if __name__ == "__main__":
     perturbed_quantum_features = generate_pgd_adversarial_example_quantum(trained_params, low_noise_data, low_noise_labels)
     perturbed_quantum_det = generate_pgd_adversarial_example_quantum(trained_params_det, low_noise_data, low_noise_labels, override = True)
     print("Adversarial examples generated successfully")
-    ## Displaying the adversarial examples
     print("----------------------------")
     print("Displaying adversarial examples for the Multi-Layer Perceptron model")
     visualize_data(perturbed_MLP_features.reshape(-1,4,4), low_noise_labels)
@@ -551,7 +541,6 @@ if __name__ == "__main__":
     print("----------------------------")
     print("Displaying adversarial examples for the Quantum model")
     visualize_data(perturbed_quantum_features.reshape(-1,4,4), low_noise_labels)
-    ## Testing the models with the adversarial examples
     accuracy_MLP_perturbed = test_classical_model(trained_MLP, perturbed_MLP_features, low_noise_labels)
     accuracy_CNN_perturbed = test_classical_model(trained_CNN, perturbed_CNN_features, low_noise_labels, flatten=False)
     accuracy_Attention_perturbed = test_classical_model(trained_Attention, perturbed_Attention_features, low_noise_labels, flatten=False)
