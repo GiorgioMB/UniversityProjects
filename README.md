@@ -25,9 +25,9 @@ Welcome to my University Projects repository. Here, I showcase the diverse proje
 - **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest, Deprecated Library Restoration, Data Imputation.
 
 ## About Me
-I'm Giorgio Micaletto, a second-year student at Bocconi University, where I am pursuing a degree in Economics, Management, and Computer Science. My academic journey has been enriched through my engagement in various student associations and a role as a research intern in the finance department at my university. 
+My name is Giorgio Micaletto, and I am currently a third-year student at Bocconi University, pursuing a BSc in Economics, Management, and Computer Science. Throughout my academic journey, I have actively contributed to several student associations and gained valuable research experience. 
 
-I am currently a research assistant under Professor Vehtari at Aalto University, working on approximating Cross-Validation Leave One Group Out error in bayesian models.
+As a research intern at both the Department of Finance at Bocconi and the Aalto University School of Science, I have focused on advancing statistical methodologies, including the development of diagnostic tools for the bridgesampling method, enhancing model validation processes.
 
 ## Connect with Me
 
