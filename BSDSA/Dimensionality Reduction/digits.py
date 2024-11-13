@@ -96,7 +96,7 @@ def train_vgae():
     train_edges_mask = data.train_mask[data.edge_index[0]] & data.train_mask[data.edge_index[1]]
     train_edges = data.edge_index[:, train_edges_mask]
     recon_loss = model.recon_loss(z, train_edges)  
-    kl_loss = (1 / data.num_nodes) * model.kl_loss() 
+    kl_loss = (1 / data.num_nodes) * model.kl_loss()  
     loss = recon_loss + kl_loss  
     loss.backward()
     optimizer.step()
@@ -197,10 +197,10 @@ plt.title('Node2Vec Training Loss')
 plt.legend()
 plt.show()
 
-
-##forward pass to both evaluate the model and get the embeddings
 model.eval()
 trad_vae.eval()
+node2vec.eval()
+ae.eval()
 with torch.no_grad():
     z = model.encode(data.x, data.edge_index, data.edge_weight)
     z_trad = trad_vae.project(data.x)
@@ -209,7 +209,7 @@ with torch.no_grad():
 
 
 
-##Check how good the reconstruction is by comparing various metrics
+##Check how good the reconstruction is by comparing different metrics
 n_clusters = len(np.unique(y))
 pca = PCA(n_components=latent)
 embeddings_pca = pca.fit_transform(data.x)
@@ -228,7 +228,7 @@ ari = adjusted_rand_score(y, cluster_labels_ltsa)
 print(f'LTSA Clustering NMI: {nmi:.4f}, ARI: {ari:.4f}')
 
 kernel = Kernel()
-
+# Initialize and apply the Diffusion Map
 diffmap = dm.DiffusionMap(kernel_object=kernel, alpha=0.2, n_evecs=latent, oos='nystroem')
 embeddings_diffmap = diffmap.fit_transform(data.x)
 kmeans = KMeans(n_clusters=n_clusters, random_state=42)
@@ -251,7 +251,7 @@ nmi = normalized_mutual_info_score(y, cluster_labels_trad)
 ari = adjusted_rand_score(y, cluster_labels_trad)
 print(f'VAE Clustering NMI: {nmi:.4f}, ARI: {ari:.4f}')
 
-embeddings_n2v = z_node2vec.cpu().numpy()
+embeddings_n2v = z_node2vec.detach().cpu().numpy()
 kmeans = KMeans(n_clusters=n_clusters, random_state=42)
 cluster_labels_n2v = kmeans.fit_predict(embeddings_n2v)
 nmi = normalized_mutual_info_score(y, cluster_labels_n2v)
@@ -503,7 +503,6 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Downstream Task Loss')
 plt.legend(loc="upper left")
-
 ax_main = plt.gca()
 ax_inset = inset_axes(ax_main, width="30%", height="30%", loc="lower left", 
                       bbox_to_anchor=(1.05, 0.2, 1, 1), 
@@ -521,9 +520,9 @@ ax_inset.set_ylim(0, 0.02)
 ax_inset.set_xticks([990, 995, 1000])
 ax_inset.set_yticks([0, 0.01, 0.02])
 ax_inset.tick_params(axis='both', which='major', labelsize=8)
+
 rect = patches.Rectangle((990, 0), 10, 0.02, linewidth=1, edgecolor='black', facecolor='none')
 ax_main.add_patch(rect)
-
 mark_inset(ax_main, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5")
 
 plt.show()
@@ -559,4 +558,3 @@ print('Node2Vec Classification Report:')
 print(classification_report(test_labels, pred7.numpy()))
 print('VGAE Classification Report:')
 print(classification_report(test_labels, pred2.numpy()))
-
