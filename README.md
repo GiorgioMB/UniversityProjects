@@ -6,7 +6,7 @@ Welcome to my University Projects repository. Here, I showcase the diverse proje
 
 ### BAINSA, BSDSA, BSML Projects
 - **Description**: A collection of projects done in collaboration with BAINSA, BSDSA and BSML, reflecting my engagement with data science and machine learning.
-- **Key Learnings**: Hyperparameters optimization, Feature Map explanation, Sequential Model architecture, External API usage, Image processing, Object Detection, Adaptive Data Loading.
+- **Key Learnings**: Hyperparameters optimization, Feature Map explanation, Dimensionality Reduction, Sequential Model architecture, External API usage, Image processing, Object Detection, Adaptive Data Loading.
 
 ### Sentiment Analysis of Financial Headlines using BERT
 - **Description**: This project involves using the BERT model for sentiment analysis of financial headlines, offering insights into market trends and investor sentiment.
