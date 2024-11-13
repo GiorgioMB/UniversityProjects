@@ -1,4 +1,4 @@
-# Electrical Circuit Recognition Project - BSDSA
+# Electrical Circuit Recognition Project
 
 ## Overview
 This repository hosts the project I led, focusing on the recognition of electrical circuits. The project involves the use of a Regional Convolutional Neural Network (R-CNN), specifically a Faster R-CNN with a ResNet50 backbone, optimized for the classification and localization of electrical components in circuit images.
