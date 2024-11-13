@@ -1,4 +1,4 @@
-# Image Classification Project - BSDSA
+# Image Classification Project
 
 ## Overview
 This repository contains the work I completed as part of a project with Bocconi Statistics and Data Science students Association (BSDSA). The project focuses on building, optimizing, and explaining a Convolutional Neural Network (CNN) for image classification.
