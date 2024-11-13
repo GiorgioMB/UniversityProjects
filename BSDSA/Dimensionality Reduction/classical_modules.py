@@ -105,3 +105,28 @@ class LogVarModule(nn.Module):
     
     def forward(self, z):
         return self.fc(z)
+    
+
+class AutoEncoder(nn.Module):
+    def __init__(self, encoder, decoder):
+        super(AutoEncoder, self).__init__()
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.encoder = encoder.to(self.device)
+        self.decoder = decoder.to(self.device)
+        self.to(self.device)
+    
+    def encode(self,x):
+        x = x.to(self.device)
+        return self.encoder(x)
+    
+    def decode(self,z):
+        z = z.to(self.device)
+        return self.decoder(z)
+    
+    def project(self, x):
+        x = x.to(self.device)
+        return self.encode(x)
+    
+    def forward(self, x):
+        return self.decode(self.encode(x))
+    
