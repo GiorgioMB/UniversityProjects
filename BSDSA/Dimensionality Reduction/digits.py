@@ -1,3 +1,4 @@
+#%%
 from graph_modules import *
 from classical_modules import *
 from metrics import *
@@ -35,15 +36,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 digits = load_digits()
 X = digits.data
 y = digits.target
-k = 16
-##Start with a naive "prior" of a k-nearest neighbor graph
-adj_matrix = kneighbors_graph(X, k, mode='connectivity', include_self=False)
-adj_matrix = adj_matrix + adj_matrix.T ##ensure symmetry
-adj_matrix[adj_matrix > 1] = 1 ##binarize
-edge_index, edge_weight = from_scipy_sparse_matrix(adj_matrix) ##convert to PyG format
-data = Data(x=torch.tensor(X, dtype=torch.float), edge_index=edge_index, edge_weight=edge_weight, y=torch.tensor(y))
 
 ##hyperparameters
+k = 16 ##number of neighbors for the k-nearest neighbor graph
 hidden = 32
 latent = 16
 heads = 4
@@ -56,6 +51,15 @@ p = 1
 q = 1
 lr = 0.001
 ##
+
+##Start with a naive "prior" of a k-nearest neighbor graph
+adj_matrix = kneighbors_graph(X, k, mode='connectivity', include_self=False)
+adj_matrix = adj_matrix + adj_matrix.T ##ensure symmetry
+adj_matrix[adj_matrix > 1] = 1 ##binarize
+edge_index, edge_weight = from_scipy_sparse_matrix(adj_matrix) ##convert to PyG format
+data = Data(x=torch.tensor(X, dtype=torch.float), edge_index=edge_index, edge_weight=edge_weight, y=torch.tensor(y))
+
+
 
 encoder = VGATEncoder(data.num_features, hidden, latent, heads, dropout)
 model = VGAE(encoder).to(device)
@@ -558,3 +562,4 @@ print('Node2Vec Classification Report:')
 print(classification_report(test_labels, pred7.numpy()))
 print('VGAE Classification Report:')
 print(classification_report(test_labels, pred2.numpy()))
+# %%
