@@ -48,35 +48,61 @@ colors = {
 }
 
 
-def generate_d_dimensional_spiral(d, n, noise=0.1):
+def generate_d_dimensional_flipped_spiral(d, n, noise=0.2, radial_scaling=1.5):
+    """
+    Generate a d-dimensional dataset with d flipped spiral arms.
+    Each arm alternates between mirrored and standard directions.
+    """
+    # Initialize the data matrix (X) and labels (y)
     X = np.zeros((d * n, d))
-    y = np.array([(i % 2) for i in range(d) for _ in range(n)])
+    y = np.zeros(d * n, dtype=int)
 
+    # Generate the arms
     for i in range(d):
-        theta = np.linspace(0, 4 * np.pi, n) 
-        r = theta 
+        # Generate the angle theta
+        theta = np.linspace(0, 4 * np.pi, n)  # Full spiral
+        r = radial_scaling * theta  # Radial component grows linearly with theta
+
+        # Map (r, theta) to Cartesian coordinates
         x = r * np.cos(theta) + noise * np.random.randn(n)
         y_coord = r * np.sin(theta) + noise * np.random.randn(n)
-        
-        X[i * n:(i + 1) * n, i % d] = x
-        if (i + 1) < d:
-            X[i * n:(i + 1) * n, (i + 1) % d] = y_coord
+
+        # Apply flipping to alternate arms
+        if i % 2 == 1:  # Flip for odd-indexed arms
+            x = -x
+            y_coord = -y_coord
+
+        # Assign to the appropriate dimensions
+        X[i * n:(i + 1) * n, 0] = x
+        X[i * n:(i + 1) * n, 1] = y_coord
+
+        # Additional dimensions (systematic offsets or mirrored patterns)
+        for dim in range(2, d):
+            if i % 2 == 1:
+                X[i * n:(i + 1) * n, dim] = -0.5 * (dim + 1) + noise * np.random.randn(n)
+            else:
+                X[i * n:(i + 1) * n, dim] = 0.5 * (dim + 1) + noise * np.random.randn(n)
+
+        # Assign class labels (alternating by arm index)
+        y[i * n:(i + 1) * n] = i % 2
 
     return X, y
 
 def visualize_spiral():
-    X, y = generate_d_dimensional_spiral(2, 1000)
+    X, y = generate_d_dimensional_flipped_spiral(2, 1000)
+    ##plot with sns
     plt.figure(figsize=(8, 6))
     sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=y, palette='viridis', legend='full')
     plt.title('2D Spiral Dataset')
+    plt.legend(title='Arm Index', loc='upper right')
     plt.tight_layout()
     plt.show()
 
 
 
 ##hyperparameters
-d = 64
-n = 20000
+d = 48
+n = 2000
 k = 16 ##number of neighbors for the k-nearest neighbor graph
 hidden = 32
 latent = 16
@@ -92,8 +118,9 @@ lr = 0.001
 epochs = 500
 epochs_downstream = 1000
 ##
+X, y = generate_d_dimensional_flipped_spiral(d, n)
+visualize_spiral()
 
-X, y = generate_d_dimensional_spiral(d, n)
 
 ##Start with a naive "prior" of a k-nearest neighbor graph
 adj_matrix = kneighbors_graph(X, k, mode='connectivity', include_self=False)
