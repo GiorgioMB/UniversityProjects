@@ -3,6 +3,7 @@ from classical_modules import *
 from metrics import *
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 import matplotlib.patches as patches
@@ -66,6 +67,8 @@ num_negative_samples = 5
 p = 1
 q = 1
 lr = 0.001
+epochs = 500
+epochs_downstream = 1000
 ##
 
 ##Start with a naive "prior" of a k-nearest neighbor graph
@@ -137,8 +140,6 @@ def train_n2v():
     return total_loss / len(loader)
 
 
-epochs = 500
-
 ##training loops
 print("Starting Node2Vec training")
 t0 = time()
@@ -198,43 +199,42 @@ for epoch in range(1, epochs + 1):
 t1 = time()
 print(f"\nAE training took {t1-t0:.2f} seconds")
 
+
+
 plt.figure(figsize=(8, 4))
-plt.plot(trad_loss_kl, label='VAE KL Loss', color=colors['VAE'])
-plt.plot(kl_losses, label='VGAE KL Loss', color=colors['VGAE'])
+sns.lineplot(x=range(1, epochs + 1), y=kl_losses, label='VGAE KL Loss', color=colors['VGAE'])
+sns.lineplot(x=range(1, epochs + 1), y=trad_loss_kl, label='VAE KL Loss', color=colors['VAE'])
 plt.yscale('log')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Training KL Loss')
 plt.legend()
-
-
 ax_main = plt.gca()
 ax_inset = inset_axes(ax_main, width="30%", height="30%", loc="lower left", 
                       bbox_to_anchor=(1.05, 0.2, 1, 1), 
                       bbox_transform=ax_main.transAxes)
-
 for losses, label, color in zip(
     [trad_loss_kl, kl_losses],
     ['VAE', 'VGAE'],
     [colors['VAE'], colors['VGAE']]
 ):
     ax_inset.plot(range(490, 500), losses[490:500], label=f'{label} Downstream Loss', color=color)
-
 ax_inset.set_xlim(490, 500)
 ax_inset.set_ylim(0, 1)
 ax_inset.set_xticks([490, 495, 500])
 ax_inset.set_yticks([0, 0.5, 1])
 ax_inset.tick_params(axis='both', which='major', labelsize=8)
-
 rect = patches.Rectangle((490, 0), 10, 1, linewidth=1, edgecolor='black', facecolor='none')
 ax_main.add_patch(rect)
 mark_inset(ax_main, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5")
 plt.show()
 
+
+
 plt.figure(figsize=(8, 4))
-plt.plot(trad_loss_recon, label='VAE Reconstruction Loss', color=colors['VAE'])
-plt.plot(recon_losses, label='VGAE Reconstruction Loss', color=colors['VGAE'])
-plt.plot(trad_ae_losses, label='AE Reconstruction Loss', color=colors['AE'])
+sns.lineplot(x=range(1, epochs + 1), y=recon_losses, label='VGAE Reconstruction Loss', color=colors['VGAE'])
+sns.lineplot(x=range(1, epochs + 1), y=trad_loss_recon, label='VAE Reconstruction Loss', color=colors['VAE'])
+sns.lineplot(x=range(1, epochs + 1), y=trad_ae_losses, label='AE Reconstruction Loss', color=colors['AE'])
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Training Reconstruction Loss')
@@ -263,7 +263,7 @@ mark_inset(ax_main, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5")
 plt.show()
 
 plt.figure(figsize=(8, 4))
-plt.plot(n2v_losses, label='Node2Vec Loss', color=colors['Node2Vec'])
+sns.lineplot(x=range(1, epochs + 1), y=n2v_losses, label='Node2Vec Loss', color=colors['Node2Vec'])
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Node2Vec Training Loss')
@@ -639,7 +639,6 @@ test_mds_embeddings = torch.tensor(embeddings_mds[test_mask], dtype=torch.float)
 train_isomap_embeddings = torch.tensor(embeddings_isomap[train_mask], dtype=torch.float)
 test_isomap_embeddings = torch.tensor(embeddings_isomap[test_mask], dtype=torch.float)
 
-epochs = 1000
 classifier1.train()
 classifier2.train()
 classifier3.train()
@@ -662,7 +661,7 @@ losses_n2v_downstream = []
 losses_laplacian_downstream = []
 losses_mds_downstream = []
 losses_isomap_downstream = []
-for epoch in range(1, epochs + 1):
+for epoch in range(1, epochs_downstream + 1):
     optimizer1.zero_grad()
     optimizer2.zero_grad()
     optimizer3.zero_grad()
@@ -735,18 +734,17 @@ for epoch in range(1, epochs + 1):
 
 
 plt.figure(figsize=(15, 10))
-plt.plot(losses_pca_downstream, label='PCA Downstream Loss', color=colors['PCA'])
-plt.plot(losses_mds_downstream, label='MDS Downstream Loss', color=colors['MDS'])
-plt.plot(losses_isomap_downstream, label='Isomap Downstream Loss', color=colors['Isomap'])
-plt.plot(losses_lle_downstream, label='LLE Downstream Loss', color=colors['LLE'])
-plt.plot(losses_ltsa_downstream, label='LTSA Downstream Loss', color=colors['LTSA'])
-plt.plot(losses_laplacian_downstream, label='Laplacian Eigenmaps Downstream Loss', color=colors['Laplacian Eigenmaps'])
-plt.plot(losses_diffmap_downstream, label='Diffusion Map Downstream Loss', color=colors['Diffusion Map'])
-plt.plot(losses_ae_downstream, label='AE Downstream Loss', color=colors['AE'])
-plt.plot(losses_vae_downstream, label='VAE Downstream Loss', color=colors['VAE'])
-plt.plot(losses_n2v_downstream, label='Node2Vec Downstream Loss', color=colors['Node2Vec'])
-plt.plot(losses_vgae_downstream, label='VGAE Downstream Loss', color=colors['VGAE'])
-
+sns.lineplot(x=range(1, epochs + 1), y=losses_pca_downstream, label='PCA Downstream Loss', color=colors['PCA'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_mds_downstream, label='MDS Downstream Loss', color=colors['MDS'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_isomap_downstream, label='Isomap Downstream Loss', color=colors['Isomap'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_lle_downstream, label='LLE Downstream Loss', color=colors['LLE'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_ltsa_downstream, label='LTSA Downstream Loss', color=colors['LTSA'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_laplacian_downstream, label='Laplacian Eigenmaps Downstream Loss', color=colors['Laplacian Eigenmaps'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_diffmap_downstream, label='Diffusion Map Downstream Loss', color=colors['Diffusion Map'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_ae_downstream, label='AE Downstream Loss', color=colors['AE'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_vae_downstream, label='VAE Downstream Loss', color=colors['VAE'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_n2v_downstream, label='Node2Vec Downstream Loss', color=colors['Node2Vec'])
+sns.lineplot(x=range(1, epochs + 1), y=losses_vgae_downstream, label='VGAE Downstream Loss', color=colors['VGAE'])
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Downstream Task Loss')
