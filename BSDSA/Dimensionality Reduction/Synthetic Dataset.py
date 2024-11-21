@@ -49,12 +49,6 @@ colors = {
 
 
 def generate_d_dimensional_spiral(d, n, noise=0.1):
-    """
-    Generates a d-dimensional spiral dataset with n samples per arm and alternating labels.
-    - d: int, dimensionality of the dataset
-    - n: int, number of samples per arm
-    - noise: float, standard deviation of the Gaussian noise added to the data
-    """
     X = np.zeros((d * n, d))
     y = np.array([(i % 2) for i in range(d) for _ in range(n)])
 
