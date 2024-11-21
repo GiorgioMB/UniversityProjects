@@ -206,6 +206,29 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Training KL Loss')
 plt.legend()
+
+
+ax_main = plt.gca()
+ax_inset = inset_axes(ax_main, width="30%", height="30%", loc="lower left", 
+                      bbox_to_anchor=(1.05, 0.2, 1, 1), 
+                      bbox_transform=ax_main.transAxes)
+
+for losses, label, color in zip(
+    [trad_loss_kl, kl_losses],
+    ['VAE', 'VGAE'],
+    [colors['VAE'], colors['VGAE']]
+):
+    ax_inset.plot(range(490, 500), losses[490:500], label=f'{label} Downstream Loss', color=color)
+
+ax_inset.set_xlim(490, 500)
+ax_inset.set_ylim(0, 1)
+ax_inset.set_xticks([490, 495, 500])
+ax_inset.set_yticks([0, 0.5, 1])
+ax_inset.tick_params(axis='both', which='major', labelsize=8)
+
+rect = patches.Rectangle((490, 0), 10, 1, linewidth=1, edgecolor='black', facecolor='none')
+ax_main.add_patch(rect)
+mark_inset(ax_main, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5")
 plt.show()
 
 plt.figure(figsize=(8, 4))
@@ -216,6 +239,27 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Training Reconstruction Loss')
 plt.legend()
+ax_main = plt.gca()
+ax_inset = inset_axes(ax_main, width="30%", height="30%", loc="lower left",
+                        bbox_to_anchor=(1.05, 0.2, 1, 1),
+                        bbox_transform=ax_main.transAxes)
+
+for losses, label, color in zip(
+    [trad_loss_recon, recon_losses, trad_ae_losses],
+    ['VAE', 'VGAE', 'AE'],
+    [colors['VAE'], colors['VGAE'], colors['AE']]
+):
+    ax_inset.plot(range(490, 500), losses[490:500], label=f'{label} Downstream Loss', color=color)
+
+ax_inset.set_xlim(490, 500)
+ax_inset.set_ylim(10, 15)
+ax_inset.set_xticks([490, 495, 500])
+ax_inset.set_yticks([10, 12.5, 15])
+ax_inset.tick_params(axis='both', which='major', labelsize=8)
+
+rect = patches.Rectangle((490, 10), 10, 5, linewidth=1, edgecolor='black', facecolor='none')
+ax_main.add_patch(rect)
+mark_inset(ax_main, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5")
 plt.show()
 
 plt.figure(figsize=(8, 4))
