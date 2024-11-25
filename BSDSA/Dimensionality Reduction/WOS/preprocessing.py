@@ -6,9 +6,6 @@ import torch
 
 def load_data():
     # Load data
-    X = pd.read_csv('WOS/X.txt', sep='\t', header=None).iloc[:100, 0].fillna('')
-    Y = pd.read_csv('WOS/Y.txt', sep='\t', header=None).iloc[:100, 0]
-    
     print(f"Number of rows in feature data: {X.shape[0]}")
     print(f"Number of rows in label data: {Y.shape[0]}")
     
