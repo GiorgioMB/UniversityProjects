@@ -54,7 +54,7 @@ digits = load_digits()
 X = digits.data
 y = digits.target
 
-##Settings
+##hyperparameters
 k = 16 ##number of neighbors for the k-nearest neighbor graph
 hidden = 32
 latent = 16
@@ -769,7 +769,7 @@ ax_inset = inset_axes(ax_main, width="30%", height="30%", loc="lower left",
                       bbox_transform=ax_main.transAxes)
 
 for losses, label, color in zip(
-    [losses_laplacian_downstream, losses_lle_downstream, losses_ltsa_downstream, losses_vgae_downstream, losses_vae_downstream, losses_pca_downstream, losses_diffmap_downstream, losses_ae_downstream, losses_n2v_downstream],
+    [losses_laplacian_downstream, losses_lle_downstream, losses_ltsa_downstream, losses_vgae_downstream, losses_vae_downstream, losses_pca_downstream, losses_diffmap_downstream, losses_ae_downstream, losses_n2v_downstream, losses_mds_downstream, losses_isomap_downstream],
     ['Laplacian Eigenmaps','LLE','LTSA', 'VGAE', 'VAE', 'PCA', 'Diffusion Map', 'AE', 'Node2Vec', 'MDS', 'Isomap'],
     [colors['Laplacian Eigenmaps'], colors['LLE'], colors['LTSA'], colors['VGAE'], colors['VAE'], colors['PCA'], colors['Diffusion Map'], colors['AE'], colors['Node2Vec'], colors['MDS'], colors['Isomap']]
 ):
