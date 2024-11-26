@@ -48,64 +48,80 @@ colors = {
 }
 
 
-def generate_d_dimensional_flipped_spiral(d, n, noise=0.2, radial_scaling=1.5):
-    """
-    Generate a d-dimensional dataset with d flipped spiral arms.
-    Each arm alternates between mirrored and standard directions.
-    """
-    # Initialize the data matrix (X) and labels (y)
-    X = np.zeros((d * n, d))
-    y = np.zeros(d * n, dtype=int)
+def generate_3d_flipped_spiral(n:int, noise=0.2, radial_scaling=1.5, z_start=0, z_range=20):
+    X = np.zeros((2 * n, 3))
+    y = np.zeros(2 * n, dtype=int)
 
-    # Generate the arms
-    for i in range(d):
-        # Generate the angle theta
-        theta = np.linspace(0, 4 * np.pi, n)  # Full spiral
-        r = radial_scaling * theta  # Radial component grows linearly with theta
+    for i in range(2):
+        theta = np.linspace(0, 4 * np.pi, n)
+        r = radial_scaling * theta
 
-        # Map (r, theta) to Cartesian coordinates
         x = r * np.cos(theta) + noise * np.random.randn(n)
         y_coord = r * np.sin(theta) + noise * np.random.randn(n)
 
-        # Apply flipping to alternate arms
-        if i % 2 == 1:  # Flip for odd-indexed arms
+        if i % 2 == 1:
             x = -x
             y_coord = -y_coord
 
-        # Assign to the appropriate dimensions
         X[i * n:(i + 1) * n, 0] = x
         X[i * n:(i + 1) * n, 1] = y_coord
 
-        # Additional dimensions (systematic offsets or mirrored patterns)
+        if i % 2 == 0:
+            X[i * n:(i + 1) * n, 2] = np.linspace(z_start, z_start + z_range, n)  # Upward slope
+        else:
+            X[i * n:(i + 1) * n, 2] = np.linspace(z_start + z_range, z_start, n)  # Downward slope
+
+        y[i * n:(i + 1) * n] = i % 2
+
+    return X, y
+
+def visualize_spiral():
+    d = 2
+    n = 1000
+    noise = 0.2
+    radial_scaling = 1.5
+    X = np.zeros((d * n, d))
+    y = np.zeros(d * n, dtype=int)
+
+    for i in range(d):
+        theta = np.linspace(0, 4 * np.pi, n)  
+        r = radial_scaling * theta  
+        x = r * np.cos(theta) + noise * np.random.randn(n)
+        y_coord = r * np.sin(theta) + noise * np.random.randn(n)
+
+        if i % 2 == 1: 
+            x = -x
+            y_coord = -y_coord
+
+        X[i * n:(i + 1) * n, 0] = x
+        X[i * n:(i + 1) * n, 1] = y_coord
+
         for dim in range(2, d):
             if i % 2 == 1:
                 X[i * n:(i + 1) * n, dim] = -0.5 * (dim + 1) + noise * np.random.randn(n)
             else:
                 X[i * n:(i + 1) * n, dim] = 0.5 * (dim + 1) + noise * np.random.randn(n)
 
-        # Assign class labels (alternating by arm index)
         y[i * n:(i + 1) * n] = i % 2
-
-    return X, y
-
-def visualize_spiral():
-    X, y = generate_d_dimensional_flipped_spiral(2, 1000)
-    ##plot with sns
     plt.figure(figsize=(8, 6))
     sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=y, palette='viridis', legend='full')
-    plt.title('2D Spiral Dataset')
+    plt.xticks([])
+    plt.yticks([])
     plt.legend(title='Arm Index', loc='upper right')
     plt.tight_layout()
+    plt.savefig('mockdataset.png')
     plt.show()
 
 
+n = 2000
+X, y = generate_3d_flipped_spiral(n)
+visualize_spiral()
+
 
 ##hyperparameters
-d = 48
-n = 2000
 k = 16 ##number of neighbors for the k-nearest neighbor graph
-hidden = 32
-latent = 16
+hidden = 3
+latent = 2
 heads = 4
 dropout = 0.1
 walk_length = 20
@@ -117,17 +133,20 @@ q = 1
 lr = 0.001
 epochs = 500
 epochs_downstream = 1000
+num_classes = len(np.unique(y))
 ##
-X, y = generate_d_dimensional_flipped_spiral(d, n)
-visualize_spiral()
-
 
 ##Start with a naive "prior" of a k-nearest neighbor graph
 adj_matrix = kneighbors_graph(X, k, mode='connectivity', include_self=False)
 adj_matrix = adj_matrix + adj_matrix.T ##ensure symmetry
 adj_matrix[adj_matrix > 1] = 1 ##binarize
 edge_index, edge_weight = from_scipy_sparse_matrix(adj_matrix) ##convert to PyG format
-data = Data(x=torch.tensor(X, dtype=torch.float), edge_index=edge_index, edge_weight=edge_weight, y=torch.tensor(y))
+data = Data(
+    x=torch.tensor(X, dtype=torch.float).to(device), 
+    edge_index=edge_index.to(device), 
+    edge_weight=edge_weight.to(device) if edge_weight is not None else None, 
+    y=torch.tensor(y).to(device) 
+)
 
 
 
@@ -136,10 +155,10 @@ model = VGAE(encoder).to(device)
 
 node2vec = Node2Vec(edge_index=data.edge_index, embedding_dim=latent, walk_length=walk_length, context_size=context_size, walks_per_node=walks_per_node, num_negative_samples=num_negative_samples, p=p, q=q).to(device)
 
-vae_encoder = Encoder(data.num_features, hidden, latent, 4)
-vae_decoder = Decoder(latent, hidden, data.num_features, 4)
-vae_mean_module = MeanModule(latent, latent)
-vae_logvar_module = LogVarModule(latent, latent)
+vae_encoder = Encoder(data.num_features, hidden, latent, 4).to(device)
+vae_decoder = Decoder(latent, hidden, data.num_features, 4).to(device)
+vae_mean_module = MeanModule(latent, latent).to(device)
+vae_logvar_module = LogVarModule(latent, latent).to(device)
 trad_vae = VAE(vae_encoder, vae_decoder, vae_mean_module, vae_logvar_module).to(device)
 
 encoder_ae = Encoder(data.num_features, hidden, latent, 4)
@@ -334,6 +353,13 @@ with torch.no_grad():
 
 
 ##Check how good the reconstruction is by comparing different metrics
+if device == 'cuda':
+    z = z.cpu()
+    z_trad = z_trad.cpu()
+    z_node2vec = z_node2vec.cpu()
+    z_ae = z_ae.cpu()
+    data.x = data.x.cpu()
+
 n_clusters = len(np.unique(y))
 pca = PCA(n_components=latent, random_state=42)
 t0 = time()
@@ -597,7 +623,7 @@ embeddings_2d = tsne.fit_transform(embeddings)
 ## be due to the way the t-SNE algorithm works as well as the inherent nature of the data (e.g. a 3 can be sometimes mistaken for an 8)
 plt.figure(figsize=(8, 8))
 scatter = plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=y, cmap='tab10', s=10)
-plt.legend(*scatter.legend_elements(), title="Digits")
+plt.legend(*scatter.legend_elements(), title="Label")
 plt.xticks([])
 plt.yticks([])
 plt.title('t-SNE Visualization of VGAE Embeddings')
@@ -606,7 +632,7 @@ plt.show()
 embeddings_2d_n2v = tsne.fit_transform(embeddings_n2v)
 plt.figure(figsize=(8, 8))
 scatter = plt.scatter(embeddings_2d_n2v[:, 0], embeddings_2d_n2v[:, 1], c=y, cmap='tab10', s=10)
-plt.legend(*scatter.legend_elements(), title="Digits")
+plt.legend(*scatter.legend_elements(), title="Label")
 plt.xticks([])
 plt.yticks([])
 plt.title('t-SNE Visualization of Node2Vec Embeddings')
@@ -615,7 +641,7 @@ plt.show()
 embeddings_2d_vae = tsne.fit_transform(embeddings_trad)
 plt.figure(figsize=(8, 8))
 scatter = plt.scatter(embeddings_2d_vae[:, 0], embeddings_2d_vae[:, 1], c=y, cmap='tab10', s=10)
-plt.legend(*scatter.legend_elements(), title="Digits")
+plt.legend(*scatter.legend_elements(), title="Label")
 plt.xticks([])
 plt.yticks([])
 plt.title('t-SNE Visualization of VAE Embeddings')
@@ -624,24 +650,24 @@ plt.show()
 embeddings_2d_pca = tsne.fit_transform(embeddings_pca)
 plt.figure(figsize=(8, 8))
 scatter = plt.scatter(embeddings_2d_pca[:, 0], embeddings_2d_pca[:, 1], c=y, cmap='tab10', s=10)
-plt.legend(*scatter.legend_elements(), title="Digits")
+plt.legend(*scatter.legend_elements(), title="Label")
 plt.xticks([])
 plt.yticks([])
 plt.title('t-SNE Visualization of PCA Embeddings')
 plt.show()
 
 ## Check how well the embeddings work for downstream tasks
-classifier1 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier2 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier3 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier4 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier5 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier6 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier7 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier8 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier9 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier10 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
-classifier11 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, 10), nn.LogSoftmax(dim=1))
+classifier1 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier2 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier3 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier4 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier5 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier6 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier7 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier8 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier9 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier10 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
+classifier11 = nn.Sequential(nn.Linear(latent, 32), nn.ReLU(), nn.Linear(32, num_classes), nn.LogSoftmax(dim=1)).to(device)
 
 optimizer1 = torch.optim.Adam(classifier1.parameters(), lr=0.01)
 optimizer2 = torch.optim.Adam(classifier2.parameters(), lr=0.01)
@@ -655,40 +681,41 @@ optimizer9 = torch.optim.Adam(classifier9.parameters(), lr=0.01)
 optimizer10 = torch.optim.Adam(classifier10.parameters(), lr=0.01)
 optimizer11 = torch.optim.Adam(classifier11.parameters(), lr=0.01)
 
-train_ltsa_embeddings = torch.tensor(embeddings_ltsa[train_mask], dtype=torch.float)
-train_labels = torch.tensor(y[train_mask], dtype=torch.long)
-test_ltsa_embeddings = torch.tensor(embeddings_ltsa[test_mask], dtype=torch.float)
-test_labels = torch.tensor(y[test_mask], dtype=torch.long)
+train_labels = torch.tensor(y[train_mask], dtype=torch.long).to(device)
+test_labels = torch.tensor(y[test_mask], dtype=torch.long).to(device)
 
-train_vgae_embeddings = torch.tensor(embeddings[train_mask], dtype=torch.float)
-test_vgae_embeddings = torch.tensor(embeddings[test_mask], dtype=torch.float)
+train_ltsa_embeddings = torch.tensor(embeddings_ltsa[train_mask], dtype=torch.float).to(device)
+test_ltsa_embeddings = torch.tensor(embeddings_ltsa[test_mask], dtype=torch.float).to(device)
 
-train_vae_embeddings = torch.tensor(embeddings_trad[train_mask], dtype=torch.float)
-test_vae_embeddings = torch.tensor(embeddings_trad[test_mask], dtype=torch.float)
+train_vgae_embeddings = torch.tensor(embeddings[train_mask], dtype=torch.float).to(device)
+test_vgae_embeddings = torch.tensor(embeddings[test_mask], dtype=torch.float).to(device)
 
-train_pca_embeddings = torch.tensor(embeddings_pca[train_mask], dtype=torch.float)
-test_pca_embeddings = torch.tensor(embeddings_pca[test_mask], dtype=torch.float)
+train_vae_embeddings = torch.tensor(embeddings_trad[train_mask], dtype=torch.float).to(device)
+test_vae_embeddings = torch.tensor(embeddings_trad[test_mask], dtype=torch.float).to(device)
 
-train_diffmap_embeddings = torch.tensor(embeddings_diffmap[train_mask], dtype=torch.float)
-test_diffmap_embeddings = torch.tensor(embeddings_diffmap[test_mask], dtype=torch.float)
+train_pca_embeddings = torch.tensor(embeddings_pca[train_mask], dtype=torch.float).to(device)
+test_pca_embeddings = torch.tensor(embeddings_pca[test_mask], dtype=torch.float).to(device)
 
-train_ae_embeddings = torch.tensor(embeddings_ae[train_mask], dtype=torch.float)
-test_ae_embeddings = torch.tensor(embeddings_ae[test_mask], dtype=torch.float)
+train_diffmap_embeddings = torch.tensor(embeddings_diffmap[train_mask], dtype=torch.float).to(device)
+test_diffmap_embeddings = torch.tensor(embeddings_diffmap[test_mask], dtype=torch.float).to(device)
 
-train_n2v_embeddings = torch.tensor(embeddings_n2v[train_mask], dtype=torch.float)
-test_n2v_embeddings = torch.tensor(embeddings_n2v[test_mask], dtype=torch.float)
+train_ae_embeddings = torch.tensor(embeddings_ae[train_mask], dtype=torch.float).to(device)
+test_ae_embeddings = torch.tensor(embeddings_ae[test_mask], dtype=torch.float).to(device)
 
-train_lle_embeddings = torch.tensor(embeddings_lle[train_mask], dtype=torch.float)
-test_lle_embeddings = torch.tensor(embeddings_lle[test_mask], dtype=torch.float)
+train_n2v_embeddings = torch.tensor(embeddings_n2v[train_mask], dtype=torch.float).to(device)
+test_n2v_embeddings = torch.tensor(embeddings_n2v[test_mask], dtype=torch.float).to(device)
 
-train_laplacian_embeddings = torch.tensor(embeddings_laplacian[train_mask], dtype=torch.float)
-test_laplacian_embeddings = torch.tensor(embeddings_laplacian[test_mask], dtype=torch.float)
+train_lle_embeddings = torch.tensor(embeddings_lle[train_mask], dtype=torch.float).to(device)
+test_lle_embeddings = torch.tensor(embeddings_lle[test_mask], dtype=torch.float).to(device)
 
-train_mds_embeddings = torch.tensor(embeddings_mds[train_mask], dtype=torch.float)
-test_mds_embeddings = torch.tensor(embeddings_mds[test_mask], dtype=torch.float)
+train_laplacian_embeddings = torch.tensor(embeddings_laplacian[train_mask], dtype=torch.float).to(device)
+test_laplacian_embeddings = torch.tensor(embeddings_laplacian[test_mask], dtype=torch.float).to(device)
 
-train_isomap_embeddings = torch.tensor(embeddings_isomap[train_mask], dtype=torch.float)
-test_isomap_embeddings = torch.tensor(embeddings_isomap[test_mask], dtype=torch.float)
+train_mds_embeddings = torch.tensor(embeddings_mds[train_mask], dtype=torch.float).to(device)
+test_mds_embeddings = torch.tensor(embeddings_mds[test_mask], dtype=torch.float).to(device)
+
+train_isomap_embeddings = torch.tensor(embeddings_isomap[train_mask], dtype=torch.float).to(device)
+test_isomap_embeddings = torch.tensor(embeddings_isomap[test_mask], dtype=torch.float).to(device)
 
 classifier1.train()
 classifier2.train()
@@ -746,17 +773,17 @@ for epoch in range(1, epochs_downstream + 1):
     loss9 = F.nll_loss(output9, train_labels)
     loss10 = F.nll_loss(output10, train_labels)
     loss11 = F.nll_loss(output11, train_labels)
-    losses_ltsa_downstream.append(loss1.item())
-    losses_vgae_downstream.append(loss2.item())
-    losses_vae_downstream.append(loss3.item())
-    losses_pca_downstream.append(loss4.item())
-    losses_diffmap_downstream.append(loss5.item())
-    losses_ae_downstream.append(loss6.item())
-    losses_n2v_downstream.append(loss7.item())
-    losses_lle_downstream.append(loss8.item())
-    losses_laplacian_downstream.append(loss9.item())
-    losses_mds_downstream.append(loss10.item())
-    losses_isomap_downstream.append(loss11.item())
+    losses_ltsa_downstream.append(loss1.item().cpu())
+    losses_vgae_downstream.append(loss2.item().cpu())
+    losses_vae_downstream.append(loss3.item().cpu())
+    losses_pca_downstream.append(loss4.item().cpu())
+    losses_diffmap_downstream.append(loss5.item().cpu())
+    losses_ae_downstream.append(loss6.item().cpu())
+    losses_n2v_downstream.append(loss7.item().cpu())
+    losses_lle_downstream.append(loss8.item().cpu())
+    losses_laplacian_downstream.append(loss9.item().cpu())
+    losses_mds_downstream.append(loss10.item().cpu())
+    losses_isomap_downstream.append(loss11.item().cpu())
     loss1.backward()
     loss2.backward()
     loss3.backward()
@@ -785,17 +812,17 @@ for epoch in range(1, epochs_downstream + 1):
 
 
 plt.figure(figsize=(15, 10))
-sns.lineplot(x=range(1, epochs + 1), y=losses_pca_downstream, label='PCA Downstream Loss', color=colors['PCA'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_mds_downstream, label='MDS Downstream Loss', color=colors['MDS'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_isomap_downstream, label='Isomap Downstream Loss', color=colors['Isomap'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_lle_downstream, label='LLE Downstream Loss', color=colors['LLE'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_ltsa_downstream, label='LTSA Downstream Loss', color=colors['LTSA'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_laplacian_downstream, label='Laplacian Eigenmaps Downstream Loss', color=colors['Laplacian Eigenmaps'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_diffmap_downstream, label='Diffusion Map Downstream Loss', color=colors['Diffusion Map'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_ae_downstream, label='AE Downstream Loss', color=colors['AE'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_vae_downstream, label='VAE Downstream Loss', color=colors['VAE'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_n2v_downstream, label='Node2Vec Downstream Loss', color=colors['Node2Vec'])
-sns.lineplot(x=range(1, epochs + 1), y=losses_vgae_downstream, label='VGAE Downstream Loss', color=colors['VGAE'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_pca_downstream, label='PCA Downstream Loss', color=colors['PCA'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_mds_downstream, label='MDS Downstream Loss', color=colors['MDS'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_isomap_downstream, label='Isomap Downstream Loss', color=colors['Isomap'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_lle_downstream, label='LLE Downstream Loss', color=colors['LLE'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_ltsa_downstream, label='LTSA Downstream Loss', color=colors['LTSA'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_laplacian_downstream, label='Laplacian Eigenmaps Downstream Loss', color=colors['Laplacian Eigenmaps'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_diffmap_downstream, label='Diffusion Map Downstream Loss', color=colors['Diffusion Map'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_ae_downstream, label='AE Downstream Loss', color=colors['AE'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_vae_downstream, label='VAE Downstream Loss', color=colors['VAE'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_n2v_downstream, label='Node2Vec Downstream Loss', color=colors['Node2Vec'])
+sns.lineplot(x=range(1, epochs_downstream + 1), y=losses_vgae_downstream, label='VGAE Downstream Loss', color=colors['VGAE'])
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Downstream Task Loss')
@@ -837,17 +864,17 @@ with torch.no_grad():
     classifier9.eval()
     classifier10.eval()
     classifier11.eval()
-    pred1 = classifier1(test_ltsa_embeddings).argmax(dim=1)
-    pred2 = classifier2(test_vgae_embeddings).argmax(dim=1)
-    pred3 = classifier3(test_vae_embeddings).argmax(dim=1)
-    pred4 = classifier4(test_pca_embeddings).argmax(dim=1)
-    pred5 = classifier5(test_diffmap_embeddings).argmax(dim=1)
-    pred6 = classifier6(test_ae_embeddings).argmax(dim=1)
-    pred7 = classifier7(test_n2v_embeddings).argmax(dim=1)
-    pred8 = classifier8(test_lle_embeddings).argmax(dim=1)
-    pred9 = classifier9(test_laplacian_embeddings).argmax(dim=1)
-    pred10 = classifier10(test_mds_embeddings).argmax(dim=1)
-    pred11 = classifier11(test_isomap_embeddings).argmax(dim=1)
+    pred1 = classifier1(test_ltsa_embeddings).argmax(dim=1).cpu()
+    pred2 = classifier2(test_vgae_embeddings).argmax(dim=1).cpu()
+    pred3 = classifier3(test_vae_embeddings).argmax(dim=1).cpu()
+    pred4 = classifier4(test_pca_embeddings).argmax(dim=1).cpu()
+    pred5 = classifier5(test_diffmap_embeddings).argmax(dim=1).cpu()
+    pred6 = classifier6(test_ae_embeddings).argmax(dim=1).cpu()
+    pred7 = classifier7(test_n2v_embeddings).argmax(dim=1).cpu()
+    pred8 = classifier8(test_lle_embeddings).argmax(dim=1).cpu()
+    pred9 = classifier9(test_laplacian_embeddings).argmax(dim=1).cpu()
+    pred10 = classifier10(test_mds_embeddings).argmax(dim=1).cpu()
+    pred11 = classifier11(test_isomap_embeddings).argmax(dim=1).cpu()
 
 print('PCA Classification Report:')
 print(classification_report(test_labels, pred4.numpy()))
