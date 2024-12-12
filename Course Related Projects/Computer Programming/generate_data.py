@@ -1,4 +1,3 @@
-#%%
 import numpy as np  
 import matplotlib.pyplot as plt      
 
@@ -40,5 +39,3 @@ def generate_data(n, seed, np_seed=None):
     f_values[marginal_diff-bsize//2:marginal_diff+bsize//2, c_marginal_diff-bsize//2:c_marginal_diff+bsize//2] = b1
     f_values[c_marginal_diff-bsize//2:c_marginal_diff+bsize//2, marginal_diff-bsize//2:marginal_diff+bsize//2] = b2
     return f_values
-    
-# %%
