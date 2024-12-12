@@ -39,6 +39,9 @@ def simann(probl, beta0=0.1, beta1=10., anneal_steps=10,
     anneal_steps dedicated to the space that goes from beta0 to log_10(beta1)
     and the other two thirds from log_10(beta1) to beta1
     """
+    # Note, if a line is commented with a double hasthag, like below,
+    ## it means they've been removed for efficiency tests, but should be uncommented to display the various steps
+
     #print(f"Running version 7 of SimAnn, class of problem: {probl.name()}")
     
     if seed is not None:
@@ -90,11 +93,10 @@ def simann(probl, beta0=0.1, beta1=10., anneal_steps=10,
         if second_patience == wait_2 or patience == 0:
             break
         patience = wait if accepted_moves > 0 else patience - 1
-        #best_probl.display_beta(beta)
+        ##best_probl.display_beta(beta)
         #print(f"beta={beta} accept_freq={accepted_moves/mcmc_steps} c={cx} best_c={best_c}")
         frequency.append(accepted_moves/mcmc_steps)
         
-    ## means they've been removed for efficiency tests
     ##best_probl.display()
     print(f"best cost = {best_c}")
     plot_betas = betas[:len(frequency)]
