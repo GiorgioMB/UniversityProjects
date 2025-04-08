@@ -75,7 +75,7 @@ def cost_new(weights, X, y):
 # Data Preparation
 # --------------------------------------------------
 def load_and_prepare():
-    seed = np.random.randint(0, 1000)
+    seed = 42
     digits = load_digits()
     mask = (digits.target == 0) | (digits.target == 1)
     X = digits.data[mask]  
