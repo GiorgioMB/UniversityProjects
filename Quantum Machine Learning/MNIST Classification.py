@@ -1,6 +1,6 @@
-# --------------------------------------------------
+# -------------------------------------------------------------------------
 # Imports and Seeding
-# --------------------------------------------------
+# -------------------------------------------------------------------------
 import pennylane as qml
 import pennylane.numpy as np
 from sklearn.datasets import load_digits
@@ -8,12 +8,15 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 np.random.seed(42)
 
-# --------------------------------------------------
+
+
+# -------------------------------------------------------------------------
 # Device and Circuit Definitions
-# --------------------------------------------------
+# -------------------------------------------------------------------------
 n_wires = 6  
 dev_baseline = qml.device("default.qubit", wires=n_wires)
 dev_new = qml.device("default.qubit", wires=n_wires)
+
 
 # Baseline Circuit: amplitude embedding on all qubits
 @qml.qnode(dev_baseline, interface="autograd")
@@ -47,12 +50,12 @@ def new_architecture_circuit(x, weights):
 
 
 
-
-# --------------------------------------------------
-# Cost Functions and Loss Definitions
-# --------------------------------------------------
+# -------------------------------------------------------------------------
+# Cost Functions, Loss Function and Test Function Definition
+# -------------------------------------------------------------------------
 def cross_entropy_loss(probs, target):
     return -np.sum(target * np.log(probs + 1e-10))
+
 
 def cost_baseline(weights, X, y):
     loss = 0
@@ -61,6 +64,7 @@ def cost_baseline(weights, X, y):
         target = np.array([1, 0]) if label == 0 else np.array([0, 1])
         loss += cross_entropy_loss(probs, target)
     return loss / len(X)
+
 
 def cost_new(weights, X, y):
     loss = 0
@@ -71,9 +75,15 @@ def cost_new(weights, X, y):
     return loss / len(X)
 
 
-# --------------------------------------------------
+def predict(circuit_fn, weights, x):
+    probs = circuit_fn(x, weights)
+    return 0 if probs[0] >= 0.5 else 1
+
+
+
+# -------------------------------------------------------------------------
 # Data Preparation
-# --------------------------------------------------
+# -------------------------------------------------------------------------
 def load_and_prepare():
     seed = 42
     digits = load_digits()
@@ -94,20 +104,21 @@ def load_and_prepare():
 
 
 
-
-
-
-# --------------------------------------------------
+# -------------------------------------------------------------------------
 # Training Setup
-# --------------------------------------------------
+# -------------------------------------------------------------------------
 num_epochs = 200 ##Note: this will take a while, testing on my local machine I used only 10 epochs
 N_layers = 3
-N_repeats = 100 
+N_repeats = 100
+
 
 total_losses_baseline = []
 total_losses_new = []
 total_grad_norms_baseline = []
 total_grad_norms_new = []
+accuracies_baseline = []
+accuracies_new = []
+
 
 for repeat in range(N_repeats):
     print(f"Repeat {repeat + 1}/{N_repeats}...")
@@ -116,18 +127,15 @@ for repeat in range(N_repeats):
     weights_new = np.random.uniform(0, 2*np.pi, size=(N_layers, n_wires, 3), requires_grad=True)
 
     opt = qml.AdamOptimizer(stepsize=0.01)
-
     loss_history_baseline = []
     grad_norm_history_baseline = []
-
+    
     loss_history_new = []
     grad_norm_history_new = []
 
-
-
-    # --------------------------------------------------
+    # -------------------------------------------------------------------------
     # Training Loop for Baseline Circuit (all qubits encode data)
-    # --------------------------------------------------
+    # -------------------------------------------------------------------------
     print("Training baseline circuit (all qubits used for encoding)")
     for epoch in range(num_epochs):
         weights_baseline, loss_val = opt.step_and_cost(lambda w: cost_baseline(w, Xb_train, y_train), weights_baseline)
@@ -140,10 +148,9 @@ for repeat in range(N_repeats):
         print(f"Epoch {epoch+1:03d}: Loss = {loss_val:.4f}, Grad Norm = {grad_norm:.4f}", end="\r")
 
 
-
-    # --------------------------------------------------
+    # -------------------------------------------------------------------------
     # Training Loop for New Architecture Circuit (partial encoding + auxiliary)
-    # --------------------------------------------------
+    # -------------------------------------------------------------------------
     print("\nTraining new architecture circuit (partial encoding + auxiliary)")
     for epoch in range(num_epochs):
         weights_new, loss_val = opt.step_and_cost(lambda w: cost_new(w, Xn_train, y_train), weights_new)
@@ -155,14 +162,9 @@ for repeat in range(N_repeats):
         print(f"Epoch {epoch+1:03d}: Loss = {loss_val:.4f}, Grad Norm = {grad_norm:.4f}", end="\r")
 
 
-
-    # --------------------------------------------------
+    # -------------------------------------------------------------------------
     # Evaluation on Test Set
-    # --------------------------------------------------
-    def predict(circuit_fn, weights, x):
-        probs = circuit_fn(x, weights)
-        return 0 if probs[0] >= 0.5 else 1
-
+    # -------------------------------------------------------------------------
     preds_baseline = [predict(baseline_circuit, weights_baseline, x_val) for x_val in Xb_test]
     acc_baseline = np.mean(np.array(preds_baseline) == y_test)
 
@@ -172,12 +174,20 @@ for repeat in range(N_repeats):
     print(f"\nBaseline Test Accuracy: {acc_baseline * 100:.2f}%")
     print(f"New Architecture Test Accuracy: {acc_new * 100:.2f}%")
 
+    accuracies_baseline.append(acc_baseline)
+    accuracies_new.append(acc_new)
+
     total_losses_baseline.append(loss_history_baseline)
     total_losses_new.append(loss_history_new)
     total_grad_norms_baseline.append(grad_norm_history_baseline)
     total_grad_norms_new.append(grad_norm_history_new)
     print(f"\nRepeat {repeat + 1}/{N_repeats} completed.\n")
 
+
+
+# -------------------------------------------------------------------------
+# Preparing Data For Plotting
+# -------------------------------------------------------------------------
 losses_baseline_array = np.array(total_losses_baseline)
 losses_new_array = np.array(total_losses_new)
 
@@ -201,9 +211,10 @@ min_grad_new = np.min(grads_new_array, axis=0)
 max_grad_new = np.max(grads_new_array, axis=0)
 
 
-# --------------------------------------------------
+
+# -------------------------------------------------------------------------
 # Plotting Loss and Gradient Norms
-# --------------------------------------------------
+# -------------------------------------------------------------------------
 plt.figure(figsize=(12, 4))
 
 # Plot Losses
@@ -235,4 +246,17 @@ plt.title("Gradient Norm over Epochs")
 plt.legend()
 
 plt.tight_layout()
+plt.show()
+
+
+
+# -------------------------------------------------------------------------
+# Box plots of Test Accuracies
+# -------------------------------------------------------------------------
+plt.figure(figsize=(8, 6))
+plt.boxplot([accuracies_baseline, accuracies_new], labels=["Baseline", "New Architecture"])
+plt.ylabel("Test Accuracy")
+plt.title("Test Accuracy Distribution")
+plt.ylim(0, 1)
+plt.grid()
 plt.show()
