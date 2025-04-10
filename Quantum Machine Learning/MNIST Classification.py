@@ -22,14 +22,7 @@ dev_new = qml.device("default.qubit", wires=n_wires)
 @qml.qnode(dev_baseline, interface="autograd")
 def baseline_circuit(x, weights):
     qml.AmplitudeEmbedding(x, wires=range(n_wires), normalize=True)
-    L = weights.shape[0]
-    for layer in range(L):
-        for wire in range(n_wires):
-            qml.RZ(weights[layer, wire, 0], wires=wire)
-            qml.RY(weights[layer, wire, 1], wires=wire)
-            qml.RX(weights[layer, wire, 2], wires=wire)
-        for wire in range(n_wires):
-            qml.CNOT(wires=[wire, (wire+1) % n_wires])
+    qml.StronglyEntanglingLayers(weights, wires=range(n_wires))
     return qml.probs(wires=0)
 
 
@@ -38,14 +31,7 @@ def baseline_circuit(x, weights):
 def new_architecture_circuit(x, weights):
     qml.AmplitudeEmbedding(x, wires=range(n_wires - 1), normalize=True)
     qml.Hadamard(wires=n_wires - 1)
-    L = weights.shape[0]
-    for layer in range(L):
-        for wire in range(n_wires):
-            qml.RZ(weights[layer, wire, 0], wires=wire)
-            qml.RY(weights[layer, wire, 1], wires=wire)
-            qml.RX(weights[layer, wire, 2], wires=wire)
-        for wire in range(n_wires):
-            qml.CNOT(wires=[wire, (wire+1) % n_wires])
+    qml.StronglyEntanglingLayers(weights, wires=range(n_wires))
     return qml.probs(wires=0)
 
 
@@ -124,7 +110,7 @@ for repeat in range(N_repeats):
     print(f"Repeat {repeat + 1}/{N_repeats}...")
     Xb_train, Xb_test, y_train, y_test, Xn_train, Xn_test = load_and_prepare()
     weights_baseline = np.random.uniform(0, 2*np.pi, size=(N_layers, n_wires, 3), requires_grad=True)
-    weights_new = np.random.uniform(0, 2*np.pi, size=(N_layers, n_wires, 3), requires_grad=True)
+    weights_new = np.copy(weights_baseline)
 
     opt = qml.AdamOptimizer(stepsize=0.01)
     loss_history_baseline = []
