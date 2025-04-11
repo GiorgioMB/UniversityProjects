@@ -5,6 +5,7 @@ import pennylane as qml
 import pennylane.numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from copy import deepcopy
 sns.set_theme(style="whitegrid", context="paper")
 np.random.seed(42)  # global seed to have reproducible randomness
 
@@ -34,7 +35,11 @@ def target_state_circuit(angle):
     """
     qml.RY(angle, wires=0)
     qml.Hadamard(wires=1)
-    qml.RY(theta_channel, wires=0)
+    qml.RY(angle, wires=1)
+    qml.CNOT(wires=[0, 1])
+    qml.CNOT(wires=[1, 0])
+    qml.RX(-theta_channel, wires=1)
+    qml.RZ(-angle, wires=1)
     return qml.state()
 
 
@@ -122,9 +127,9 @@ def evaluate_architecture(circuit_fn, weights, angles):
 # --------------------------------------------------
 # Initialize Training Parameters and Data
 # --------------------------------------------------
-N_layers = 2  
+N_layers = 4  
 num_epochs = 200
-opt = qml.AdamOptimizer(stepsize=0.01)
+opt = qml.AdamOptimizer(stepsize=0.005)
 N_repeats = 100
 N_train = 20
 N_test = 10
@@ -151,7 +156,7 @@ test_angles = np.random.uniform(0, np.pi, N_test)
 for repeat in range(N_repeats):
     print(f"Repeat {repeat + 1}/{N_repeats}...")
     weights_baseline = np.random.uniform(0, 2*np.pi, size=(N_layers, n_wires, 3), requires_grad=True)
-    weights_new = np.copy(weights_baseline)
+    weights_new = deepcopy(weights_baseline)  # Initialize new architecture weights to the same as baseline
 
 
     # Lists to store training history for each repeat
