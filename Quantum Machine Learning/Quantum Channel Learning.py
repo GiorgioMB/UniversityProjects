@@ -17,6 +17,7 @@ np.random.seed(42)  # global seed to have reproducible randomness
 n_wires = 2  
 dev_baseline = qml.device("default.qubit", wires=n_wires)
 dev_new = qml.device("default.qubit", wires=n_wires)
+dev_target = qml.device("default.qubit", wires=n_wires)
 
 
 
@@ -25,21 +26,62 @@ dev_new = qml.device("default.qubit", wires=n_wires)
 # --------------------------------------------------
 theta_channel = np.pi / 4
 
+def random_haar_unitary(n):
+    """
+    Generate an n × n unitary matrix sampled from the Haar measure.
 
-@qml.qnode(dev_new, interface="autograd")
+    This function uses the standard method of generating a Haar-random unitary:
+    it constructs a complex matrix with i.i.d. standard normal entries (real and imaginary parts),
+    performs a QR decomposition, and adjusts the phases to ensure uniformity
+    with respect to the Haar measure on U(n).
+
+    Parameters
+    ----------
+    n : int
+        Dimension of the unitary matrix to generate.
+
+    Returns
+    -------
+    ndarray
+        An n × n unitary matrix sampled from the Haar measure.
+    """
+    z = (np.random.normal(size=(n, n)) + 1j * np.random.normal(size=(n, n))) / np.sqrt(2)
+    q, r = np.linalg.qr(z)
+    d = np.diagonal(r)
+    ph = d / np.abs(d)
+    q = q * ph
+    return q
+Haar_U = random_haar_unitary(4)  # Haar-random unitary for 2-qubit circuit
+
+
+@qml.qnode(dev_target, interface="autograd")
 def target_state_circuit(angle):
     """
-    Prepares the target state for a given input angle.
-    Encoding: RY(angle) on data qubit and Hadamard on auxiliary,
-    followed by the known channel: RY(theta_channel) on the data qubit.
+    Construct a 2-qubit quantum circuit preparing a Haar-perturbed RY-rotated state.
+
+    The circuit starts from the initial state |00⟩. Each qubit undergoes an RY rotation
+    with the same angle, followed by the application of a fixed Haar-random 2-qubit unitary
+    U ∈ U(4). The resulting state is:
+
+        .. math::
+
+            |\psi(\theta)\rangle = U \cdot \left( RY(\theta) \otimes RY(\theta) \right) |00\rangle
+
+    where U is sampled once via `random_haar_unitary(4)` and fixed across calls.
+
+    Parameters
+    ----------
+    angle : float
+        Rotation angle θ for both RY gates.
+
+    Returns
+    -------
+    ndarray
+        The final statevector as a NumPy array of shape (4,).
     """
     qml.RY(angle, wires=0)
-    qml.Hadamard(wires=1)
     qml.RY(angle, wires=1)
-    qml.CNOT(wires=[0, 1])
-    qml.CNOT(wires=[1, 0])
-    qml.RX(-theta_channel, wires=1)
-    qml.RZ(-angle, wires=1)
+    qml.QubitUnitary(Haar_U, wires=[0, 1])
     return qml.state()
 
 
@@ -55,9 +97,37 @@ def target_state(angle):
 @qml.qnode(dev_baseline, interface="autograd")
 def baseline_channel_circuit(angle, weights):
     """
-    Baseline circuit: Both qubits encode the input.
-    We encode the input angle on each qubit using RY rotations.
-    Then L layers of parameterized single-qubit rotations and a CNOT entangling gate are applied.
+    Prepare a 2-qubit quantum state using the baseline encoding architecture.
+
+    This circuit encodes the input parameter `angle` into both qubits using RY rotations. 
+    After data encoding, it applies a series of L entangling layers using the 
+    `StronglyEntanglingLayers` template, which alternates parameterized single-qubit 
+    rotations with CNOT gates.
+
+    Mathematically, the prepared state is:
+
+        .. math::
+
+            |\psi_{\text{base}}(\theta, W)\rangle = \mathcal{U}_{\text{ent}}(W) \cdot 
+            \left( RY(\theta) \otimes RY(\theta) \right) |00\rangle
+
+    where:
+    - :math:`\theta` is the input angle,
+    - :math:`W` denotes the parameters for the entangling layers,
+    - :math:`\mathcal{U}_{\text{ent}}(W)` represents the L-layer strongly entangling ansatz.
+
+    Parameters
+    ----------
+    angle : float
+        Input angle θ to be encoded via RY rotations on both qubits.
+    weights : array[float]
+        Trainable parameters for `StronglyEntanglingLayers`, shaped according to 
+        (L, n_wires, 3).
+
+    Returns
+    -------
+    ndarray
+        The final statevector as a NumPy array of shape (4,).
     """
     for wire in range(n_wires):
         qml.RY(angle, wires=wire)    
@@ -68,11 +138,41 @@ def baseline_channel_circuit(angle, weights):
 @qml.qnode(dev_new, interface="autograd")
 def new_architecture_channel_circuit(angle, weights):
     """
-    New architecture circuit: Only the data qubit encodes the input.
-    Data qubit: encoded via RY(angle); auxiliary qubit: prepared in |+> via Hadamard.
-    Then L layers of parameterized rotations on both qubits with an entangling CNOT are applied.
+    Prepare a 2-qubit quantum state using the new asymmetric encoding architecture.
+
+    This circuit encodes the input parameter `angle` only on qubit 0 (the data qubit)
+    using an RY rotation. Qubit 1 (the auxiliary qubit) is initialized in the |+⟩ state
+    using a Hadamard gate. The encoded state then undergoes L layers of parameterized
+    operations via the `StronglyEntanglingLayers` template.
+
+    Mathematically, the state prepared is:
+
+        .. math::
+
+            |\psi_{\text{new}}(\theta, W)\rangle = \mathcal{U}_{\text{ent}}(W) \cdot 
+            \left( RY(\theta) \otimes H \right) |00\rangle
+
+    where:
+    - :math:`RY(\theta)` encodes the data on qubit 0,
+    - :math:`H` prepares qubit 1 in the |+⟩ state,
+    - :math:`\mathcal{U}_{\text{ent}}(W)` is the L-layer strongly entangling template.
+
+    This architecture biases the expressivity toward asymmetric roles of data and
+    auxiliary qubits, potentially improving generalization.
+
+    Parameters
+    ----------
+    angle : float
+        Input angle θ to be encoded via RY on the data qubit (qubit 0).
+    weights : array[float]
+        Trainable parameters for `StronglyEntanglingLayers`, shaped according to 
+        (L, n_wires, 3).
+
+    Returns
+    -------
+    ndarray
+        The final statevector as a NumPy array of shape (4,).
     """
-    # Encoding step.
     qml.RY(angle, wires=0)
     qml.Hadamard(wires=1)
     qml.StronglyEntanglingLayers(weights, wires=range(n_wires))
@@ -85,41 +185,117 @@ def new_architecture_channel_circuit(angle, weights):
 # --------------------------------------------------
 def fidelity(state1, state2):
     """
-    Computes fidelity between two pure states.
-    Fidelity = |<state1|state2>|^2 = (Re(inner))^2 + (Im(inner))^2,
-    where inner = sum(conj(state1) * state2)
+    Compute the fidelity between two pure quantum states.
+
+    Fidelity is defined as:
+
+        .. math::
+
+            F(|\psi\rangle, |\phi\rangle) = |\langle \psi | \phi \rangle|^2
+
+    For pure states represented as complex vectors, this is computed as:
+
+        .. math::
+
+            F = \left( \mathrm{Re}(\langle \psi | \phi \rangle) \right)^2 + 
+                \left( \mathrm{Im}(\langle \psi | \phi \rangle) \right)^2
+
+    This implementation assumes that both `state1` and `state2` are normalized vectors
+    representing pure quantum states in the same Hilbert space.
+
+    Parameters
+    ----------
+    state1 : array[complex]
+        Complex statevector of the first pure quantum state.
+    state2 : array[complex]
+        Complex statevector of the second pure quantum state.
+
+    Returns
+    -------
+    float
+        Fidelity between the two states, in [0, 1].
     """
     inner = qml.math.sum(qml.math.conj(state1) * state2)
     return qml.math.square(qml.math.real(inner)) + qml.math.square(qml.math.imag(inner))
 
 
-def cost_function_baseline(weights, angles):
-    """Cost for the baseline architecture: average (1 - fidelity) over training angles."""
-    loss = 0
-    for angle in angles:
-        output_state = baseline_channel_circuit(angle, weights)
-        t_state = target_state(angle)
-        loss += 1 - fidelity(t_state, output_state)
-    return loss / len(angles)
+def cost_function(circuit_fn, weights, angles):
+    """
+    Compute the average fidelity-based loss over a set of training angles.
 
+    For each input angle, this function compares the output of a quantum circuit
+    to a precomputed target state using the fidelity. The cost is defined as:
 
-def cost_function_new(weights, angles):
-    """Cost for the new architecture: average (1 - fidelity) over training angles."""
+        .. math::
+
+            \text{Loss}(\theta, W) = 1 - \frac{1}{N} \sum_{i=1}^N 
+                F\left( |\psi_{\text{target}}(\theta_i)\rangle, 
+                        |\psi_{\text{circuit}}(\theta_i, W)\rangle \right)
+
+    where:
+    - :math:`\theta_i` are the input angles,
+    - :math:`W` are the variational parameters,
+    - :math:`F` is the fidelity function.
+
+    Parameters
+    ----------
+    circuit_fn : callable
+        A quantum function (QNode) taking `(angle, weights)` and returning a statevector.
+    weights : array[float]
+        Trainable parameters used inside the quantum circuit.
+    angles : list[float]
+        Input data points (e.g., encoded via RY gates).
+
+    Returns
+    -------
+    float
+        The mean fidelity loss (1 - fidelity) across all training angles.
+    """
+    global train_states
+    total_todo = len(angles)
     loss = 0
+    currently_done = 0
     for angle in angles:
-        output_state = new_architecture_channel_circuit(angle, weights)
-        t_state = target_state(angle)
+        output_state = circuit_fn(angle, weights)
+        t_state = train_states[angle]
         loss += 1 - fidelity(t_state, output_state)
+        currently_done += 1
+        print(f"Progress ({(currently_done/total_todo)*100:.2f}%)", end="\r")
     return loss / len(angles)
 
 
 def evaluate_architecture(circuit_fn, weights, angles):
-    """Evaluate average fidelity over a list of angles."""
+    """
+    Evaluate the average fidelity of a quantum circuit on a test dataset.
+
+    For each angle in the input list, the function computes the fidelity between
+    the circuit's output and the precomputed target state. This provides a direct
+    performance metric for comparing different circuit architectures.
+
+    Parameters
+    ----------
+    circuit_fn : callable
+        A quantum function (QNode) taking `(angle, weights)` and returning a statevector.
+    weights : array[float]
+        Trained parameters used in the circuit.
+    angles : list[float]
+        List of test angles used to evaluate generalization.
+
+    Returns
+    -------
+    float
+        Mean fidelity between the circuit outputs and the target test states.
+    """
+    global test_states
     fidelities = []
+    currently_done = 0
+    total_todo = len(angles)
     for angle in angles:
         output_state = circuit_fn(angle, weights)
-        t_state = target_state(angle)
+        t_state = test_states[angle]
         fidelities.append(fidelity(t_state, output_state))
+        currently_done += 1
+        print(f"Progress ({(currently_done/total_todo)*100:.2f}%)", end="\r")
     return np.mean(fidelities)
 
 
@@ -127,12 +303,12 @@ def evaluate_architecture(circuit_fn, weights, angles):
 # --------------------------------------------------
 # Initialize Training Parameters and Data
 # --------------------------------------------------
-N_layers = 4  
+N_layers = 4
 num_epochs = 200
-opt = qml.AdamOptimizer(stepsize=0.005)
+opt = qml.AdamOptimizer(stepsize=0.001)
 N_repeats = 100
-N_train = 20
-N_test = 10
+N_train = 1000
+N_test = 100
 
 
 # Containers to store per-experiment data:
@@ -144,9 +320,15 @@ test_fidelity_baseline = []
 test_fidelity_new = []
 
 
-# Generate random training and test angles
+# Generate random training and test samples
+print("Beginning training and test states generation...")
 train_angles = np.random.uniform(0, np.pi, N_train)
 test_angles = np.random.uniform(0, np.pi, N_test)
+assert np.unique(train_angles).size == N_train, "Training angles are not unique!"
+assert np.unique(test_angles).size == N_test, "Test angles are not unique!"
+train_states = {train_angle: target_state(train_angle) for train_angle in train_angles}
+test_states = {test_angle: target_state(test_angle) for test_angle in test_angles}
+print("Training and test states generated.")
 
 
 
@@ -168,23 +350,26 @@ for repeat in range(N_repeats):
 
     # Training loop for both architectures
     for epoch in range(num_epochs):
-        weights_baseline, loss_val_baseline = opt.step_and_cost(
-            lambda w: cost_function_baseline(w, train_angles), weights_baseline
-        )
+        # --- Baseline architecture ---
+        loss_val_baseline = cost_function(baseline_channel_circuit, weights_baseline, train_angles)
+        grad_baseline = qml.grad(lambda w: cost_function(baseline_channel_circuit, w, train_angles))(weights_baseline)
+        weights_baseline = opt.apply_grad(grad_baseline, weights_baseline)
+        weights_baseline = np.array(weights_baseline, requires_grad=True)
         loss_history_baseline.append(loss_val_baseline)
-        grad_baseline = qml.grad(lambda w: cost_function_baseline(w, train_angles))(weights_baseline)
-        grad_norm_baseline = np.linalg.norm(grad_baseline)
-        grad_norm_history_baseline.append(grad_norm_baseline)
+        grad_norm_history_baseline.append(np.linalg.norm(grad_baseline))
 
-
-        weights_new, loss_val_new = opt.step_and_cost(
-            lambda w: cost_function_new(w, train_angles), weights_new
-        )
+        
+        # --- New architecture ---
+        loss_val_new = cost_function(new_architecture_channel_circuit, weights_new, train_angles)
+        grad_new = qml.grad(lambda w: cost_function(new_architecture_channel_circuit, w, train_angles))(weights_new)
+        weights_new = opt.apply_grad(grad_new, weights_new)
+        weights_new = np.array(weights_new, requires_grad=True)
         loss_history_new.append(loss_val_new)
-        grad_new = qml.grad(lambda w: cost_function_new(w, train_angles))(weights_new)
-        grad_norm_new = np.linalg.norm(grad_new)
-        grad_norm_history_new.append(grad_norm_new)
-        print(f"Epoch {epoch+1:03d}: Baseline Architecture: Loss = {loss_val_baseline:.4f}, Grad Norm = {grad_norm_baseline:.4f} New Architecture: Loss = {loss_val_new:.4f}, Grad Norm = {grad_norm_new:.4f}", end="\r")
+        grad_norm_history_new.append(np.linalg.norm(grad_new))
+
+        
+        print({' '*13},f"Epoch {epoch+1:03d}: Baseline Architecture: Loss = {loss_val_baseline:.4f}, Grad Norm = {grad_norm_history_baseline[-1]:.4f} New Architecture: Loss = {loss_val_new:.4f}, Grad Norm = {grad_norm_history_new[-1]:.4f}", end="\r")
+        del loss_val_baseline, grad_baseline, loss_val_new, grad_new
 
     
     fid_baseline = evaluate_architecture(baseline_channel_circuit, weights_baseline, test_angles)
@@ -213,6 +398,7 @@ baseline_loss_min = baseline_loss_all.min(axis=0)
 baseline_loss_mean = baseline_loss_all.mean(axis=0)
 baseline_loss_max = baseline_loss_all.max(axis=0)
 
+
 baseline_grad_min = baseline_grad_all.min(axis=0)
 baseline_grad_mean = baseline_grad_all.mean(axis=0)
 baseline_grad_max = baseline_grad_all.max(axis=0)
@@ -221,6 +407,7 @@ baseline_grad_max = baseline_grad_all.max(axis=0)
 new_loss_min = new_loss_all.min(axis=0)
 new_loss_mean = new_loss_all.mean(axis=0)
 new_loss_max = new_loss_all.max(axis=0)
+
 
 new_grad_min = new_grad_all.min(axis=0)
 new_grad_mean = new_grad_all.mean(axis=0)
