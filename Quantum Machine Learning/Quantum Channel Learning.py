@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pennylane as qml
 import pennylane.numpy as np
 import numpy as cnp
@@ -16,7 +17,7 @@ print = functools.partial(print, flush=True)
 sns.set_theme(style="whitegrid", context="paper")
 print("[INIT] Setting constants and seeds...")  
 SEED_GLOBAL  = 42       
-N_LAYERS     = 4
+N_LAYERS     = 5
 NUM_EPOCHS   = 200
 N_REPEATS    = 100
 N_TRAIN      = 1000
@@ -98,7 +99,7 @@ assert np.unique(test_angles).size == N_TEST
 assert np.intersect1d(train_angles, test_angles).size == 0
 
 
-print("[INIT] Evaluating training/test target states...")  # [PRINT]
+print("[INIT] Evaluating training/test target states...") 
 train_states = {theta: target_state(theta) for theta in train_angles}
 test_states  = {theta: target_state(theta) for theta in test_angles}
 _repeat_seeds = np.random.randint(0, 1000000, size=N_REPEATS)
@@ -114,7 +115,6 @@ def fidelity(s1, s2):
 
 
 def cost_function_serial(circuit_fn, weights, angles):
-    """Compute the mean 1-Fidelity loss over `angles` with no parallelism."""
     total_loss = 0.0
     for theta in angles:
         out_state = circuit_fn(theta, weights)
@@ -122,13 +122,11 @@ def cost_function_serial(circuit_fn, weights, angles):
     return total_loss / len(angles)
 
 
-def evaluate_architecture_parallel(circuit_fn, weights, angles, n_jobs=-1):
-    def single_fid(angle):
-        out = circuit_fn(angle, weights)
-        return fidelity(test_states[angle], out)
-    fids = Parallel(n_jobs=n_jobs, backend="threading")(
-        delayed(single_fid)(theta) for theta in angles
-    )
+def evaluate_architecture_serial(circuit_fn, weights, angles):
+    fids = []
+    for theta in angles:
+        out = circuit_fn(theta, weights)
+        fids.append(fidelity(test_states[theta], out))
     return np.mean(fids)
 
 
@@ -164,25 +162,27 @@ def run_single_repeat(args):
     grad_hist_n = []
 
     for epoch in range(NUM_EPOCHS):
-        print(f"[REPEAT {repeat_id}] Epoch {epoch + 1}/{NUM_EPOCHS}")  # [PRINT]
         Lb = cost_function_serial(baseline_channel_circuit, wb, train_angles)
         gb = qml.grad(lambda w: cost_function_serial(baseline_channel_circuit, w, train_angles))(wb)
         wb = opt.apply_grad(gb, wb)
         wb = np.array(wb, requires_grad=True)
+        nb = np.linalg.norm(gb)
         loss_hist_b.append(Lb)
-        grad_hist_b.append(np.linalg.norm(gb))
+        grad_hist_b.append(nb)
 
 
         Ln = cost_function_serial(new_architecture_channel_circuit, wn, train_angles)
         gn = qml.grad(lambda w: cost_function_serial(new_architecture_channel_circuit, w, train_angles))(wn)
         wn = opt.apply_grad(gn, wn)
         wn = np.array(wn, requires_grad=True)
+        nn = np.linalg.norm(gn)
         loss_hist_n.append(Ln)
-        grad_hist_n.append(np.linalg.norm(gn))
+        grad_hist_n.append(nn)
+        print(f"[REPEAT {repeat_id}] Epoch {epoch + 1}/{NUM_EPOCHS}, Losses: Baseline={Lb:.4f}, New={Ln:.4f}; Gradient Norms: Baseline={nb:.4f}, New={nn:.4f}")
 
 
-    fb = evaluate_architecture_parallel(baseline_channel_circuit, wb, test_angles)
-    fn = evaluate_architecture_parallel(new_architecture_channel_circuit, wn, test_angles)
+    fb = evaluate_architecture_serial(baseline_channel_circuit, wb, test_angles)
+    fn = evaluate_architecture_serial(new_architecture_channel_circuit, wn, test_angles)
     print(f"[REPEAT {repeat_id}] Completed — Fids: Baseline={fb:.4f}, New={fn:.4f}")  
     return (loss_hist_b, grad_hist_b, loss_hist_n, grad_hist_n, fb, fn)
 
