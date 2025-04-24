@@ -29,7 +29,7 @@ np.random.seed(SEED_GLOBAL)
 # Device setup
 # --------------------------------------------------
 print("[INIT] Initializing devices...")  
-n_wires    = 2
+n_wires    = 6
 dev_base   = qml.device("default.qubit", wires=n_wires)
 dev_new    = qml.device("default.qubit", wires=n_wires)
 dev_target = qml.device("default.qubit", wires=n_wires)
@@ -58,9 +58,9 @@ Haar_U = random_haar_unitary(2**n_wires)
 print("[INIT] Defining QNodes...")  
 @qml.qnode(dev_target, interface="autograd")
 def target_state_circuit(angle):
-    qml.RY(angle, wires=0)
-    qml.RY(angle, wires=1)
-    qml.QubitUnitary(Haar_U, wires=[0, 1])
+    for w in range(n_wires):
+        qml.RY(angle, wires=w)
+    qml.QubitUnitary(Haar_U, wires=range(n_wires))
     return qml.state()
 
 
@@ -78,8 +78,10 @@ def baseline_channel_circuit(angle, weights):
 
 @qml.qnode(dev_new, interface="autograd")
 def new_architecture_channel_circuit(angle, weights):
-    qml.RY(angle, wires=0)
-    qml.Hadamard(wires=1)
+    for w in range((n_wires//2)+1):
+        qml.RY(angle, wires=w) 
+    for w in range((n_wires//2)+1, n_wires):
+        qml.Hadamard(wires=w)
     qml.StronglyEntanglingLayers(weights, wires=range(n_wires))
     return qml.state()
 
