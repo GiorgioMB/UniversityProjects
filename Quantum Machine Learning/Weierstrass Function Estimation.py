@@ -129,7 +129,7 @@ def run_single_repeat(args):
     wn = deepcopy(init_w)
 
 
-    opt = qml.AdamOptimizer(stepsize=0.01)
+    opt = qml.AdamOptimizer(stepsize=0.001)
     loss_hist_b = []
     grad_hist_b = []
     loss_hist_n = []
