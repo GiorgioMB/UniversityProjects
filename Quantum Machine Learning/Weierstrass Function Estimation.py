@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# weierstrass_qml.py
+
 import pennylane as qml
 import pennylane.numpy as np
 import numpy as cnp
@@ -19,7 +21,7 @@ NUM_EPOCHS  = 200
 N_REPEATS   = 100
 N_TRAIN     = 8000
 N_TEST      = 2000
-
+N_WORKERS   = 20
 
 a = 0.55
 b = 5
@@ -142,8 +144,9 @@ def run_single_repeat(args):
         gb = qml.grad(lambda w: mse_loss(baseline_circuit, w, train_X, train_Y))(wb)
         wb = opt.apply_grad(gb, wb)
         wb = np.array(wb, requires_grad=True)
+        nb = np.linalg.norm(gb)
         loss_hist_b.append(Lb)
-        grad_hist_b.append(np.linalg.norm(gb))
+        grad_hist_b.append(nb)
 
 
         # New architecture update
@@ -151,11 +154,12 @@ def run_single_repeat(args):
         gn = qml.grad(lambda w: mse_loss(new_circuit, w, train_X, train_Y))(wn)
         wn = opt.apply_grad(gn, wn)
         wn = np.array(wn, requires_grad=True)
+        nn = np.linalg.norm(gn)
         loss_hist_n.append(Ln)
-        grad_hist_n.append(np.linalg.norm(gn))
+        grad_hist_n.append(nn)
 
 
-        print(f"[REPEAT {repeat_id}] Epoch {epoch+1}/{NUM_EPOCHS}: Baseline Loss={Lb:.4f}, New Loss={Ln:.4f}")
+        print(f"[REPEAT {repeat_id}] Epoch {epoch + 1}/{NUM_EPOCHS}, Losses: Baseline={Lb:.4f}, New={Ln:.4f}; Gradient Norms: Baseline={nb:.4f}, New={nn:.4f}")
 
 
     # Evaluate test MSE
@@ -175,7 +179,7 @@ if __name__ == "__main__":
     args = list(enumerate(seeds))
 
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
         results = list(executor.map(run_single_repeat, args))
 
 
