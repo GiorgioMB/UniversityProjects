@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# parallel_qml.py
+
 import pennylane as qml
 import pennylane.numpy as np
 import numpy as cnp
@@ -281,4 +283,5 @@ if __name__ == "__main__":
         "Current SotA Fidelity":    fid_baseline_all,
         "Proposed Architecture Fidelity":    fid_new_all,
     })
-    df_fid.to_csv("qml_results_fidelities.csv", index=False)
+    df_fid.to_csv("qml_results_haar_fidelities.csv", index=False)
+    print("[MAIN] Done.")
