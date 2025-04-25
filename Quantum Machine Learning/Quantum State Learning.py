@@ -263,7 +263,7 @@ if __name__ == "__main__":
             ylabel="Test Fidelity", title="Fidelity Distribution")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig("qml_results.png", dpi=600, bbox_inches="tight")
+    plt.savefig("haar_qml_results.png", dpi=600, bbox_inches="tight")
     plt.show()
 
     # Save results
