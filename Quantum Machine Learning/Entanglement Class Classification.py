@@ -264,5 +264,4 @@ if __name__ == "__main__":
         'Proposed Test Acc': acc_n_all,
     })
     df_acc.to_csv('entanglement_test_accuracy.csv', index=False)
-
     print("[MAIN] Done.")
