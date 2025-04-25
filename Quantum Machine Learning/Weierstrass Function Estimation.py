@@ -86,6 +86,8 @@ def new_circuit(x, weights):
     # Embed only first 4 features; leave qubits 4,5 as ancillas
     for j in range(4):
         qml.RY(x[j] * np.pi, wires=j)
+        if j < 2:
+            qml.RZ(x[j+4] * np.pi, wires=j)
     # Initialize ancillas in superposition
     for w in [4, 5]:
         qml.Hadamard(wires=w)
