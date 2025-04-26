@@ -146,7 +146,7 @@ def compute_stats(arr):
 # --------------------------------------------------
 def run_single_repeat(args):
     repeat_id, seed = args
-    print(f"[REPEAT {repeat_id}] Starting with seed {seed}")  # [PRINT]
+    print(f"[REPEAT {repeat_id}] Starting with seed {seed}")
 
     np.random.seed(int(seed))
 
