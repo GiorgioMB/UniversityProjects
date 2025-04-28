@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# parity_mod3_qml.py
+
 import pennylane as qml
 import pennylane.numpy as np
 import numpy as cnp
@@ -22,6 +24,8 @@ N_TRAIN     = 4000
 N_TEST      = 1000
 STEPSIZE    = 1e-3
 EPSILON     = 1e-6
+N_WORKERS   = 50
+
 
 np.random.seed(SEED_GLOBAL)
 sns.set_theme(style="whitegrid", context="paper")
@@ -158,7 +162,7 @@ if __name__ == "__main__":
     seeds = np.random.randint(0, 1e6, size=N_REPEATS)
     args = list(enumerate(seeds))
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
         results = list(executor.map(run_single_repeat, args))
 
     # Unpack results
@@ -188,27 +192,36 @@ if __name__ == "__main__":
     # Plotting
     print("[MAIN] Plotting results...")
     plt.figure(figsize=(18, 6))
-    plt.suptitle(f"Mod-3 Classification over {N_REPEATS} runs", fontsize=16)
+    plt.suptitle(f"Comparison over {N_REPEATS} runs", fontsize=16, y=0.98)
 
+    # Training Loss
     ax1 = plt.subplot(1, 3, 1)
-    sns.lineplot(x=epochs, y=b_loss['mean'], label='Baseline', ax=ax1)
-    sns.lineplot(x=epochs, y=n_loss['mean'], label='Proposed', ax=ax1)
-    ax1.fill_between(epochs, b_loss['min'], b_loss['max'], alpha=0.1)
-    ax1.fill_between(epochs, n_loss['min'], n_loss['max'], alpha=0.1)
-    ax1.set(title='Training Loss', xlabel='Epoch', ylabel='Cross-Entropy')
+    for stats, label, color in [(b_loss, "Current SotA", "blue"), (n_loss, "Proposed Architecture", "orange")]:
+        sns.lineplot(x=epochs, y=stats["mean"], label=label, color=color, ax=ax1)
+        ax1.fill_between(epochs, stats["min"], stats["max"], color=color, alpha=0.1)
+        ax1.fill_between(epochs, stats["q1"], stats["q3"], color=color, alpha=0.3)
+    ax1.set(title="Training Loss", xlabel="Epoch", ylabel="Cross-Entropy")
 
+    # Gradient Norm
     ax2 = plt.subplot(1, 3, 2)
-    sns.lineplot(x=epochs, y=b_grad['mean'], label='Baseline', ax=ax2)
-    sns.lineplot(x=epochs, y=n_grad['mean'], label='Proposed', ax=ax2)
-    ax2.fill_between(epochs, b_grad['min'], b_grad['max'], alpha=0.1)
-    ax2.fill_between(epochs, n_grad['min'], n_grad['max'], alpha=0.1)
-    ax2.set(title='Gradient Norm', xlabel='Epoch', ylabel='||∇L||')
+    for stats, label, color in [(b_grad, "Current SotA", "blue"), (n_grad, "Proposed Architecture", "orange")]:
+        sns.lineplot(x=epochs, y=stats["mean"], label=label, color=color, ax=ax2)
+        ax2.fill_between(epochs, stats["min"], stats["max"], color=color, alpha=0.1)
+        ax2.fill_between(epochs, stats["q1"], stats["q3"], color=color, alpha=0.3)
+    ax2.set(title="Gradient Norm", xlabel="Epoch", ylabel="∥∇L∥")
 
+    # Test Accuracy Distribution
     ax3 = plt.subplot(1, 3, 3)
-    sns.violinplot(data=[acc_b_all, acc_n_all], palette=['blue', 'orange'], inner=None, cut=0, ax=ax3)
-    sns.boxplot(data=[acc_b_all, acc_n_all], width=0.15, palette=['blue', 'orange'], ax=ax3)
-    ax3.set(xticks=[0, 1], xticklabels=['Baseline', 'Proposed'],
-            ylabel='Test Accuracy', title='Test Accuracy Distribution')
+    sns.violinplot(data=[acc_b_all, acc_n_all],
+                palette=["blue", "orange"], inner=None, cut=0, ax=ax3, alpha=0.3)
+    sns.boxplot(data=[acc_b_all, acc_n_all],
+                width=0.15, palette=["blue", "orange"], showcaps=True,
+                boxprops={"zorder": 2}, whiskerprops={"zorder": 2},
+                medianprops={"zorder": 3, "color": "black"},
+                flierprops={"marker": "o", "markersize": 4, "alpha": 0.6},
+                ax=ax3)
+    ax3.set(xticks=[0, 1], xticklabels=["Current SotA", "Proposed Architecture"],
+            ylabel="Test Accuracy", title="Test Accuracy Distribution")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig('parity_mod3_qml_results.png', dpi=600, bbox_inches='tight')
@@ -217,17 +230,17 @@ if __name__ == "__main__":
     # Save CSVs
     df_hist = pd.DataFrame({
         'Epoch': cnp.tile(epochs, N_REPEATS),
-        'Baseline Cross-Entropy': b_loss_all.flatten(),
-        'Proposed Cross-Entropy': n_loss_all.flatten(),
-        'Baseline Grad Norm': b_grad_all.flatten(),
-        'Proposed Grad Norm': n_grad_all.flatten(),
+        'Current SotA Cross-Entropy': b_loss_all.flatten(),
+        'Proposed Architecture Cross-Entropy': n_loss_all.flatten(),
+        'Current SotA Gradient Norm': b_grad_all.flatten(),
+        'Proposed Architecture Gradient Norm': n_grad_all.flatten(),
     })
     df_hist.to_csv('parity_mod3_loss_grad_history.csv', index=False)
 
     df_acc = pd.DataFrame({
         'Repeat': cnp.arange(N_REPEATS),
-        'Baseline Test Acc': acc_b_all,
-        'Proposed Test Acc': acc_n_all,
+        'Current SotA Accuracy': acc_b_all,
+        'Proposed Architecture Accuracy': acc_n_all,
     })
     df_acc.to_csv('parity_mod3_test_accuracy.csv', index=False)
 
