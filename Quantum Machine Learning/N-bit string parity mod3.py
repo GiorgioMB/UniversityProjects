@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# parity_mod3_qml_jax.py
-
 import jax
 import jax.numpy as jnp
 import pennylane as qml
