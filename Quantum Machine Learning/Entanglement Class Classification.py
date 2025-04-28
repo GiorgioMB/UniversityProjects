@@ -223,7 +223,7 @@ if __name__ == "__main__":
     # Plotting
     print("[MAIN] Plotting results...")
     plt.figure(figsize=(18, 6))
-    plt.suptitle(f"Entanglement Classification over {N_REPEATS} runs", fontsize=16, y=0.98)
+    plt.suptitle(f"Comparison over {N_REPEATS} runs", fontsize=16, y=0.98)
 
     # Training Loss
     ax1 = plt.subplot(1, 3, 1)
