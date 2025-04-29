@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-import optax
+import optax  
+
 
 # --------------------------------------------------
 # Global constants & deterministic seeding
@@ -20,7 +21,7 @@ N_TRAIN     = 4000
 N_TEST      = 1000
 STEPSIZE    = 1e-3
 EPSILON     = 1e-6
-WIRES       = 8
+WIRES       = 20
 
 
 
@@ -36,6 +37,7 @@ def generate_mod3_dataset(N, seed):
     for cls, count in enumerate(counts):
         gen = 0
         while gen < count:
+            # now x is length WIRES == 20
             x = rng.randint(0, 2, size=WIRES)
             if int(x.sum()) % 3 == cls:
                 X.append(x)
@@ -70,21 +72,26 @@ dev = qml.device("default.qubit", wires=WIRES)
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
 def baseline_circuit(x, weights):
+    # amplitude‐encoding each bit via RX
     for j in range(WIRES):
         qml.RX(jnp.pi * x[j], wires=j)
     qml.StronglyEntanglingLayers(weights, wires=range(WIRES))
+    # still measuring the first two qubits for a 4‐outcome prob vector
     return qml.probs(wires=[0, 1])
 
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
 def proposed_circuit(x, weights):
-    # Pairwise Ry-Rz encoding on first 4 wires
-    for j in range(4):
-        qml.RY(jnp.pi * x[j],   wires=j)
-        qml.RZ(jnp.pi * x[j+4], wires=j)
-    # Ancillas in |+>
-    for j in range(4, WIRES):
+    # Generalized pairwise RY–RZ on the first half of wires
+    half = WIRES // 2
+    for j in range(half):
+        qml.RY(jnp.pi * x[j],               wires=j)
+        qml.RZ(jnp.pi * x[j + half],        wires=j)
+
+    # Set the other half of wires into |+> as ancillas
+    for j in range(half, WIRES):
         qml.Hadamard(wires=j)
+
     qml.StronglyEntanglingLayers(weights, wires=range(WIRES))
     return qml.probs(wires=[0, 1])
 
