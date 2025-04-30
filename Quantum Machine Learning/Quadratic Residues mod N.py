@@ -6,13 +6,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-import optax  
+import warnings
+import optax
+from copy import deepcopy
+
 
 
 # --------------------------------------------------
 # Global constants & deterministic seeding
 # --------------------------------------------------
-print("[INIT] Setting constants and seeds...")  
+sns.set_theme(style="whitegrid", context="paper")
+warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+
+
 SEED_GLOBAL = 42
 LAYERS      = 5
 NUM_EPOCHS  = 200
@@ -22,40 +28,43 @@ N_TEST      = 1000
 STEPSIZE    = 1e-3
 EPSILON     = 1e-6
 WIRES       = 20
+N_MODULUS   = 3233 # RSA-style modulus for quadratic residuosity, we choose a small semiprime, 3233 = 61 * 53
 
 
 
 # --------------------------------------------------
 # Dataset generation (pure NumPy)
 # --------------------------------------------------
-def generate_mod3_dataset(N, seed):
+def generate_quadratic_res_dataset(n_samples, seed):
+    # Precompute quadratic residues mod N_MODULUS
+    residues = set((z * z) % N_MODULUS for z in range(N_MODULUS))
     rng = np.random.RandomState(seed)
-    per = N // 3
-    rem = N - 3 * per
-    counts = [per + (1 if i < rem else 0) for i in range(3)]
     X, Y = [], []
-    for cls, count in enumerate(counts):
-        gen = 0
-        while gen < count:
-            # now x is length WIRES == 20
-            x = rng.randint(0, 2, size=WIRES)
-            if int(x.sum()) % 3 == cls:
-                X.append(x)
-                y = np.zeros(3)
-                y[cls] = 1.0
-                Y.append(y)
-                gen += 1
-    X = np.stack(X); Y = np.stack(Y)
-    idx = rng.permutation(len(X))
+
+    while len(X) < n_samples:
+        # random bitstring of length WIRES
+        bits = rng.randint(0, 2, size=WIRES)
+        # interpret as integer
+        x_int = int(bits.dot(2 ** np.arange(WIRES))) % N_MODULUS
+        label = 1 if x_int in residues else 0
+        X.append(bits)
+        # one-hot binary target
+        y = np.array([1.0, 0.0]) if label == 0 else np.array([0.0, 1.0])
+        Y.append(y)
+
+    X = np.stack(X)
+    Y = np.stack(Y)
+    # shuffle
+    idx = rng.permutation(n_samples)
     return X[idx], Y[idx]
 
 
-print("[INIT] Generating training and test datasets...") 
-train_X_np, train_Y_np = generate_mod3_dataset(N_TRAIN, SEED_GLOBAL)
-test_X_np,  test_Y_np  = generate_mod3_dataset(N_TEST,  SEED_GLOBAL + 1)
+# Generate datasets
+train_X_np, train_Y_np = generate_quadratic_res_dataset(N_TRAIN, SEED_GLOBAL)
+test_X_np,  test_Y_np  = generate_quadratic_res_dataset(N_TEST,  SEED_GLOBAL + 1)
 
 
-print("[INIT] Moving to JAX training and test datasets...")
+# Move to JAX
 train_X = jnp.array(train_X_np)
 train_Y = jnp.array(train_Y_np)
 test_X  = jnp.array(test_X_np)
@@ -64,70 +73,64 @@ test_Y  = jnp.array(test_Y_np)
 
 
 # --------------------------------------------------
-# Quantum devices & QNodes with JAX interface
+# Define QNodes
 # --------------------------------------------------
-print("[INIT] Defining QNodes...")  
 dev = qml.device("default.qubit", wires=WIRES)
 
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
 def baseline_circuit(x, weights):
-    # amplitude‐encoding each bit via RX
+    # Encode each bit as RX
     for j in range(WIRES):
         qml.RX(jnp.pi * x[j], wires=j)
     qml.StronglyEntanglingLayers(weights, wires=range(WIRES))
-    # still measuring the first two qubits for a 4‐outcome prob vector
-    return qml.probs(wires=[0, 1])
+    # measure one qubit for binary classification
+    return qml.probs(wires=[0])
 
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
 def proposed_circuit(x, weights):
-    # Generalized pairwise RY–RZ on the first half of wires
     half = WIRES // 2
     for j in range(half):
-        qml.RY(jnp.pi * x[j],               wires=j)
-        qml.RZ(jnp.pi * x[j + half],        wires=j)
-
-    # Set the other half of wires into |+> as ancillas
+        qml.RY(jnp.pi * x[j], wires=j)
+        qml.RZ(jnp.pi * x[j + half], wires=j)
     for j in range(half, WIRES):
         qml.Hadamard(wires=j)
-
     qml.StronglyEntanglingLayers(weights, wires=range(WIRES))
-    return qml.probs(wires=[0, 1])
+    return qml.probs(wires=[0])
 
 
-batched_baseline = jax.vmap(baseline_circuit,  in_axes=(0, None))
+batched_baseline = jax.vmap(baseline_circuit, in_axes=(0, None))
 batched_proposed = jax.vmap(proposed_circuit, in_axes=(0, None))
 
 
 
 # --------------------------------------------------
-# Loss, gradient, and accuracy
+# Loss, gradient, and accuracy (binary)
 # --------------------------------------------------
-def cross_entropy(probs, targets):
-    p = probs[:, :3] + EPSILON
+def binary_cross_entropy(probs, targets):
+    # probs shape (batch, 2), targets one-hot
+    p = probs + EPSILON
     p = p / jnp.sum(p, axis=1, keepdims=True)
     return -jnp.mean(jnp.sum(targets * jnp.log(p), axis=1))
 
 
 def loss_and_grads(weights, X, Y, circuit_fn):
     probs = circuit_fn(X, weights)
-    loss  = cross_entropy(probs, Y)
-    grads = jax.grad(lambda w: cross_entropy(circuit_fn(X, w), Y))(weights)
+    loss  = binary_cross_entropy(probs, Y)
+    grads = jax.grad(lambda w: binary_cross_entropy(circuit_fn(X, w), Y))(weights)
     return loss, grads
 
 
-print("[INIT] Defining loss and gradient functions...")
 baseline_step  = jax.jit(lambda w, X, Y: loss_and_grads(w, X, Y, batched_baseline))
 proposed_step = jax.jit(lambda w, X, Y: loss_and_grads(w, X, Y, batched_proposed))
 
 
 def accuracy(weights, X, Y, circuit_fn):
     probs = circuit_fn(X, weights)
-    preds = jnp.argmax(probs[:, :3], axis=1)
+    preds = jnp.argmax(probs, axis=1)
     truths= jnp.argmax(Y, axis=1)
     return jnp.mean(preds == truths)
-
 
 
 # --------------------------------------------------
@@ -137,12 +140,14 @@ def train_one_repeat(seed, dict_map):
     key = jax.random.PRNGKey(int(seed))
     seed_number = dict_map[seed]
     wb = jax.random.uniform(key, (LAYERS, WIRES, 3), minval=0, maxval=2*jnp.pi)
-    wn = wb.copy()
+    wn = deepcopy(wb)
+
 
     # Optax optimizer setup
     tx = optax.adam(STEPSIZE)
     opt_state_b = tx.init(wb)
     opt_state_n = tx.init(wn)
+
 
     loss_hist_b, grad_hist_b = [], []
     loss_hist_n, grad_hist_n = [], []
@@ -153,13 +158,16 @@ def train_one_repeat(seed, dict_map):
         wb = optax.apply_updates(wb, updates_b)
         nb = jnp.linalg.norm(gb)
 
+
         ln, gn = proposed_step(jax.device_get(wn), train_X, train_Y)
         updates_n, opt_state_n = tx.update(gn, opt_state_n, params=wn)
         wn = optax.apply_updates(wn, updates_n)
         nn = jnp.linalg.norm(gn)
 
+
         loss_hist_b.append(float(lb)); grad_hist_b.append(float(nb))
         loss_hist_n.append(float(ln)); grad_hist_n.append(float(nn))
+
 
         print(f"[REPEAT {seed_number}] Epoch {epoch}/{NUM_EPOCHS}, Losses: Baseline={lb:.4f}, New={ln:.4f}; Gradient Norms: Baseline={nb:.4f}, New={nn:.4f}")
 
@@ -167,7 +175,6 @@ def train_one_repeat(seed, dict_map):
     acc_b = float(accuracy(wb, test_X, test_Y, batched_baseline))
     acc_n = float(accuracy(wn, test_X, test_Y, batched_proposed))
     print(f"[REPEAT {seed_number}] Completed — Accuracy: Baseline={acc_b:.4f}, New={acc_n:.4f}")  
-
     return loss_hist_b, grad_hist_b, loss_hist_n, grad_hist_n, acc_b, acc_n
 
 
@@ -194,6 +201,7 @@ if __name__ == "__main__":
     map_to_enumerate = {s: i for i, s in enumerate(seeds)}
     results = [train_one_repeat(s, map_to_enumerate) for s in seeds]
 
+
     # Unpack
     b_loss_all = np.array([r[0] for r in results])
     b_grad_all = np.array([r[1] for r in results])
@@ -202,6 +210,7 @@ if __name__ == "__main__":
     acc_b_all  = np.array([r[4] for r in results])
     acc_n_all  = np.array([r[5] for r in results])
 
+
     # Compute stats
     b_loss = stats(b_loss_all)
     n_loss = stats(n_loss_all)
@@ -209,10 +218,12 @@ if __name__ == "__main__":
     n_grad = stats(n_grad_all)
     epochs = np.arange(1, NUM_EPOCHS + 1)
 
+
     # Plotting
     print("[MAIN] Plotting results...") 
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
     fig.suptitle(f"Comparison over {N_REPEATS} runs", fontsize=16, y=0.98)
+
 
     # Training Loss
     for stats, label, color in [(b_loss, "Current SotA", "blue"), (n_loss, "Proposed Architecture", "orange")]:
@@ -222,6 +233,7 @@ if __name__ == "__main__":
     axes[0].set(title="Training Loss", xlabel="Epoch", ylabel="Cross-Entropy")
     axes[0].legend()
 
+
     # Gradient Norm
     for stats, label, color in [(b_grad, "Current SotA", "blue"), (n_grad, "Proposed Architecture", "orange")]:
         axes[1].plot(epochs, stats["mean"], label=label, color=color)
@@ -229,6 +241,7 @@ if __name__ == "__main__":
         axes[1].fill_between(epochs, stats["q1"], stats["q3"], color=color, alpha=0.3)
     axes[1].set(title="Gradient Norm", xlabel="Epoch", ylabel="∥∇L∥")
     axes[1].legend()
+
 
     # Test Accuracy Distribution
     sns.violinplot(data=[acc_b_all, acc_n_all],
@@ -242,25 +255,27 @@ if __name__ == "__main__":
     axes[2].set(xticks=[0, 1], xticklabels=["Current SotA", "Proposed Architecture"],
                 title="Test Accuracy Distribution", ylabel="Accuracy")
 
+
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig("parity_mod3_qml_jax_results.png", dpi=600, bbox_inches="tight")
+    plt.savefig("quadratic_residues_qml_results.png", dpi=600, bbox_inches="tight")
     plt.show()
+
 
     # Save CSVs
     df_hist = pd.DataFrame({
         "Epoch":             np.tile(epochs, N_REPEATS),
-        "Baseline Loss":     b_loss_all.flatten(),
-        "Proposed Loss":     n_loss_all.flatten(),
-        "Baseline GradNorm": b_grad_all.flatten(),
-        "Proposed GradNorm": n_grad_all.flatten(),
+        "Current SotA Loss":     b_loss_all.flatten(),
+        "Proposed Architecture Loss":     n_loss_all.flatten(),
+        "Current SotA Gradient Norm": b_grad_all.flatten(),
+        "Proposed Architecture Gradient Norm": n_grad_all.flatten(),
     })
-    df_hist.to_csv("parity_mod3_loss_grad_history.csv", index=False)
+    df_hist.to_csv("quadratic_residues_loss_grad_history.csv", index=False)
+
 
     df_acc = pd.DataFrame({
         "Repeat":            np.arange(N_REPEATS),
-        "Baseline Accuracy": acc_b_all,
-        "Proposed Accuracy": acc_n_all,
+        "Current SotA Accuracy": acc_b_all,
+        "Proposed Architecture Accuracy": acc_n_all,
     })
-    df_acc.to_csv("parity_mod3_test_accuracy.csv", index=False)
-
+    df_acc.to_csv("quadratic_residues_test_accuracy.csv", index=False)
     print("[MAIN] Done.")
