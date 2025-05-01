@@ -9,12 +9,15 @@ import pandas as pd
 import warnings
 import optax
 from copy import deepcopy
+import functools
+print = functools.partial(print, flush=True)
 
 
 
 # --------------------------------------------------
 # Global constants & deterministic seeding
 # --------------------------------------------------
+print("[INIT] Setting constants and seeds...")  
 sns.set_theme(style="whitegrid", context="paper")
 warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
 
@@ -27,7 +30,7 @@ N_TRAIN     = 4000
 N_TEST      = 1000
 STEPSIZE    = 1e-3
 EPSILON     = 1e-6
-WIRES       = 20
+WIRES       = 16
 N_MODULUS   = 3233 # RSA-style modulus for quadratic residuosity, we choose a small semiprime, 3233 = 61 * 53
 
 
