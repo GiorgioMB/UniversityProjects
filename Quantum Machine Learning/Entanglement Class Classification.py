@@ -60,14 +60,14 @@ def state_prod(theta, phi):
 # --------------------------------------------------
 def generate_dataset(n_per_class):
     X, Y = [], []
-    for c, cls in enumerate(target_classes):
+    for c, clss in enumerate(target_classes):
         for _ in range(n_per_class):
-            if cls == "GHZ":
+            if clss == "GHZ":
                 phi = np.random.uniform(0, 2*np.pi)
                 psi = state_ghz(phi)
-            elif cls == "W":
+            elif clss == "W":
                 psi = state_w()
-            elif cls == "Biseparable":
+            elif clss == "Biseparable":
                 theta = np.random.uniform(0, np.pi/2)
                 psi = state_bi(theta)
             else:
