@@ -24,13 +24,13 @@ SEED_GLOBAL = 42
 LAYERS      = 5
 NUM_EPOCHS  = 200
 N_REPEATS   = 100
-CHUNK_SIZE  = 10  
-N_TRAIN     = 2600
-N_TEST      = 650
+CHUNK_SIZE  = 20  
+N_TRAIN     = 3072
+N_TEST      = 1024
 STEPSIZE    = 1e-3
 EPSILON     = 1e-6
-WIRES       = 14
-N_MODULUS   = 89 * 61  # Any semiprime in 2^14 would work 
+WIRES       = 12
+N_MODULUS   = 998  ## Chosen as it splits the valid and invalid residues evenly
 
 
 
