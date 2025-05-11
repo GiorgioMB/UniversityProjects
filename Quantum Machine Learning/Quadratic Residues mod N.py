@@ -21,14 +21,14 @@ warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
 
 
 SEED_GLOBAL = 42
-LAYERS      = 5
+LAYERS      = 8
 NUM_EPOCHS  = 200
 N_REPEATS   = 100
-CHUNK_SIZE  = 20  
+CHUNK_SIZE  = 50  
 N_TRAIN     = 3072
 N_TEST      = 1024
 STEPSIZE    = 1e-3
-EPSILON     = 1e-6
+EPSILON     = 1e-12
 WIRES       = 12
 N_MODULUS   = 998  ## Chosen as it splits the valid and invalid residues evenly
 
@@ -53,7 +53,7 @@ def generate_quadratic_res_dataset(n_samples, seed, invalid_set= None):
             invalid_codes.add(code)
 
 
-    total_codes = 1 << WIRES  # 2**WIRES
+    total_codes = 1 << WIRES
     all_codes = np.arange(total_codes)
 
 
@@ -90,6 +90,8 @@ def generate_quadratic_res_dataset(n_samples, seed, invalid_set= None):
     perm = rng.permutation(n_samples)
     return bits[perm], labels[perm]
 
+
+
 # --------------------------------------------------
 # QNode definitions & batching
 # --------------------------------------------------
@@ -101,18 +103,19 @@ def baseline_circuit(x, weights):
     for j in range(WIRES):
         qml.RX(jnp.pi * x[j], wires=j)
 
-
+    
     qml.StronglyEntanglingLayers(weights, wires=range(WIRES))
     return qml.probs(wires=[0])
+
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
 def proposed_circuit(x, weights):
     half = WIRES // 2
     for j in range(half):
-        qml.RY(jnp.pi * x[j], wires=j)
-        qml.RZ(jnp.pi * x[j+half], wires=j)
-    
+        qml.RX(jnp.pi * x[j], wires=j)
+        qml.RY(jnp.pi * x[j+half], wires=j)
 
+    
     for j in range(half, WIRES):
         qml.Hadamard(wires=j)
 
@@ -213,6 +216,8 @@ def make_chunked_trainer(circuit_fn):
 # Summary statistics helper
 # --------------------------------------------------
 def stats(arr):
+
+    
     return {
         "min":  np.min(arr, axis=1),
         "q1":   np.percentile(arr, 25, axis=1),
