@@ -51,8 +51,6 @@ CLIFF_U = jnp.array(CLIFF_U_NP)
 # QNode definitions (JAX interface)
 # --------------------------------------------------
 print("[INIT] Defining QNodes…")
-
-
 @qml.qnode(DEV, interface="jax", diff_method="backprop")
 def target_state_circuit(angle: float):
     """Produces the target state |ψ(θ)⟩ ≔ U_C · RY(θ)^{⊗n}|0⟩"""
