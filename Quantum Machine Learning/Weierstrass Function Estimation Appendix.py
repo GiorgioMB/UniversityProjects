@@ -11,11 +11,14 @@ import optax
 import functools
 print = functools.partial(print, flush=True)
 
+
+
 # --------------------------------------------------
 # Global constants & deterministic seeding
 # --------------------------------------------------
 sns.set_theme(style="whitegrid", context="paper")
 warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+
 
 SEED_GLOBAL = 42
 LAYERS      = 4
@@ -31,6 +34,8 @@ N_TEST      = 500
 A = 0.55
 B = 5
 N_MAX = 8
+
+
 
 # --------------------------------------------------
 # Dataset generation
@@ -50,10 +55,13 @@ def generate_weierstrass(n_samples, seed):
     Y = jnp.array([weier(x) for x in X]) / C
     return jnp.array(X), Y
 
+
+
 # --------------------------------------------------
 # QNode definitions & batching
 # --------------------------------------------------
 dev = qml.device("default.qubit", wires=WIRES)
+
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
 def baseline_circuit(x, weights):
@@ -63,6 +71,7 @@ def baseline_circuit(x, weights):
             qml.RZ(x[j+4] * jnp.pi, wires=j)
     qml.StronglyEntanglingLayers(weights, wires=range(WIRES))
     return qml.expval(qml.PauliZ(0))
+
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
 def proposed_circuit(x, weights):
@@ -75,9 +84,12 @@ def proposed_circuit(x, weights):
     qml.StronglyEntanglingLayers(weights, wires=range(WIRES))
     return qml.expval(qml.PauliZ(0))
 
+
 batched_baseline = jax.vmap(baseline_circuit, in_axes=(0, None))
 batched_proposed = jax.vmap(proposed_circuit, in_axes=(0, None))
 print("[INIT] QNode definitions complete.")
+
+
 
 # --------------------------------------------------
 # Loss helper
@@ -85,21 +97,28 @@ print("[INIT] QNode definitions complete.")
 def mse_loss(preds, targets):
     return jnp.mean((preds - targets)**2)
 
+
+
 # --------------------------------------------------
 # Trainer builder
 # --------------------------------------------------
 opt = optax.adam(STEPSIZE)
 
+
 def make_trainer(circuit_fn):
+
+    
     def init_params(key):
         return jax.random.uniform(key, (LAYERS, WIRES, 3), minval=0.0, maxval=2*jnp.pi)
 
+    
     @jax.jit
     def train(keys, X, Y):
         def single_run(key):
             params = init_params(key)
             state = opt.init(params)
 
+            
             def step(carry, _):
                 p, s = carry
                 preds = circuit_fn(X, p)
@@ -110,17 +129,25 @@ def make_trainer(circuit_fn):
                 gn = jnp.linalg.norm(grads)
                 return (p, s), (loss, gn)
 
+            
             (_, _), (loss_hist, grad_hist) = jax.lax.scan(
                 step,
                 (params, state),
                 None,
                 length=NUM_EPOCHS
             )
+            
+            
             return loss_hist, grad_hist, params
 
+        
         loss_h, grad_h, finals = jax.vmap(single_run)(keys)
         return loss_h, grad_h, finals
+    
+    
     return train
+
+
 
 # --------------------------------------------------
 # Summary statistics
@@ -134,6 +161,9 @@ def stats(arr):
     'max':   np.max(arr, axis=0),
 }
 
+
+
+
 # --------------------------------------------------
 # Main script
 # --------------------------------------------------
@@ -143,17 +173,19 @@ if __name__ == "__main__":
     test_X, test_Y   = generate_weierstrass(N_TEST,  SEED_GLOBAL + 1)
     print(f"[INIT] Data shapes: {train_X.shape}, {train_Y.shape}; {test_X.shape}, {test_Y.shape}")
 
+    
     print("[INIT] Preparing trainers...")
     baseline_train = make_trainer(batched_baseline)
     proposed_train = make_trainer(batched_proposed)
 
+    
     keys = jax.random.split(jax.random.PRNGKey(SEED_GLOBAL), N_REPEATS)
-
     print("[MAIN] Training baseline architecture...")
     loss_b_h, grad_b_h, fin_b = baseline_train(keys, train_X, train_Y)
     print("[MAIN] Training proposed architecture...")
     loss_n_h, grad_n_h, fin_n = proposed_train(keys, train_X, train_Y)
 
+    
     # to NumPy
     loss_b_np = np.array(loss_b_h)
     grad_b_np = np.array(grad_b_h)
@@ -166,16 +198,19 @@ if __name__ == "__main__":
     test_b_all = np.array([mse_loss(pred_test_b[i], test_Y) for i in range(N_REPEATS)])
     test_n_all = np.array([mse_loss(pred_test_n[i], test_Y) for i in range(N_REPEATS)])
 
+    
     b_loss = stats(loss_b_np)
     n_loss = stats(loss_n_np)
     b_grad = stats(grad_b_np)
     n_grad = stats(grad_n_np)
     epochs = np.arange(1, NUM_EPOCHS+1)
 
+    
     print("[MAIN] Plotting results...")
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
     fig.suptitle(f"Comparison over {N_REPEATS} runs", fontsize=16)
 
+    
     # --- Training Loss ---
     for stats_d, label, col in [
         (b_loss, "0 Initialized Ancillary", "blue"),
@@ -193,6 +228,7 @@ if __name__ == "__main__":
         ylabel="MSE Loss"
     )
 
+    
     # --- Gradient Norm ---
     for stats_d, label, col in [
         (b_grad, "0 Initialized Ancillary", "blue"),
@@ -210,6 +246,7 @@ if __name__ == "__main__":
         ylabel="∥∇L∥"
     )
 
+    
     # --- Test MSE Distribution ---
     # Use saturation to lighten the violin colors, then bump alpha on the patches if desired
     vp = sns.violinplot(
@@ -241,12 +278,13 @@ if __name__ == "__main__":
         title="Test MSE Distribution"
     )
 
+    
     # Make room for the suptitle
     fig.tight_layout(rect=[0, 0, 1, 0.95])
-
     fig.savefig("weierstrass_qml_results_0_H.png", dpi=600, bbox_inches="tight")
     plt.show()
 
+    
     # Save CSVs
     df_loss = pd.DataFrame({
         'Epoch': np.tile(epochs, N_REPEATS),
@@ -257,11 +295,11 @@ if __name__ == "__main__":
     })
     df_loss.to_csv("qml_results_weierstrass_0_H.csv", index=False)
 
+    
     df_test = pd.DataFrame({
         'Repeat': np.arange(1, N_REPEATS+1),
         '0 Initialized Ancillary Test MSE': test_b_all,
         'H Initialized Ancillary Test MSE': test_n_all,
     })
     df_test.to_csv("qml_results_weierstrass_test_mse_0_H.csv", index=False)
-
     print("[MAIN] Done.")
