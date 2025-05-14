@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# weierstrass_qml.py
-
 import pennylane as qml
 import pennylane.numpy as np
 import numpy as cnp
