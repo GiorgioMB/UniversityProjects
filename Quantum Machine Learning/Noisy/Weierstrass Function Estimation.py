@@ -53,10 +53,10 @@ def generate_weierstrass(n_samples, seed):
 # --------------------------------------------------
 # QNode definitions & batching
 # --------------------------------------------------
-dev = qml.device("default.mixed", wires=WIRES, p = 0.05)
+dev = qml.device("default.mixed", wires=WIRES)
 
 @qml.qnode(dev, interface="jax", diff_method="backprop")
-def baseline_circuit(x, weights):
+def baseline_circuit(x, weights, p = 0.05):
     for j in range(4):
         qml.RY(x[j] * jnp.pi, wires=j)
         if j < 2:
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         'Current SotA Gradient Norm': grad_b_np.flatten(),
         'Proposed Architecture Gradient Norm': grad_n_np.flatten(),
     })
-    df_loss.to_csv("qml_results_weierstrass_0_H.csv", index=False)
+    df_loss.to_csv("qml_results_weierstrass_noisy.csv", index=False)
 
     df_test = pd.DataFrame({
         'Repeat': np.arange(1, N_REPEATS+1),
