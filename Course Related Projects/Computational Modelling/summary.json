@@ -1,0 +1,21 @@
+{
+  "HP": {
+    "n_qubits": 6,
+    "population": 50,
+    "generations": 50,
+    "tournament": 3,
+    "max_init_depth": 8,
+    "p_cx": 0.7,
+    "p_mut": 0.3,
+    "optimiser_steps": 30,
+    "optimiser_sigma": 0.15,
+    "complexity_penalty": 0.01,
+    "seed": 42,
+    "shots": null,
+    "use_qaoa": false,
+    "results_dir": "results"
+  },
+  "runtime_sec": 16479.930020093918,
+  "test_accuracy": 0.9027777777777778,
+  "depth": 4
+}
