@@ -18,7 +18,7 @@ Welcome to my University Projects repository. Here, I showcase the diverse proje
 
 ### Course-Related Projects
 - **Description**: This folder contains all the required and elective projects I completed during my studies.
-- **Key Learnings**: R, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest, Deprecated Library Restoration, Data Imputation, Stochastic Optimization.
+- **Key Learnings**: R, Pennylane, JAX, Quantum Machine Learning, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest, Deprecated Library Restoration, Data Imputation, Stochastic Optimization, Gradient Free Quantum Optimization.
 
 ## About Me
 My name is Giorgio Micaletto, and I am currently a third-year student at Bocconi University, pursuing a BSc in Economics, Management, and Computer Science. Throughout my academic journey, I have actively contributed to several student associations and gained valuable research experience. 
