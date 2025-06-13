@@ -123,3 +123,8 @@ Generated champion circuit (drawn on six wires):
 | **Add new gates**            | Append to `GATE_SET` and extend `Individual.make_qnode()`.                                               |
 | **Try deeper QAOA**          | Increase block insertion probability or encode $p>1$ layers.                                             |
 
+## Citation
+
+If you find this project helpful and would like to reference it in your own work, feel free to cite the associated manuscript or link back to this repository.
+
+
