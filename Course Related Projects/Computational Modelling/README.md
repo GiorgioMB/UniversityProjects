@@ -94,7 +94,7 @@ All outputs land in `results/` and are overwritten each run.
 
 Generated champion circuit (drawn on six wires):
 
-![champion\_circuit.pdf](results/champion_circuit.pdf)
+![champion_circuit.pdf](results/champion_circuit.pdf)
 
 ---
 
