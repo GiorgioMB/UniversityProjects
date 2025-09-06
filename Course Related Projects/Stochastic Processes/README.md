@@ -26,4 +26,6 @@ The talk surveys geometric and analytic techniques that guarantee weak existence
 
 ## Using the Material
 
-Feel free to cite, adapt, or extend the material, feel free to contact me for the TeX sources.
+Feel free to cite, adapt, or extend the material and also to contact me for the TeX sources.[^1]
+
+[^1]: As of **6 September 2025**, I identified and corrected several minor notational slip-ups in the original version of these slides. The current repository reflects the corrected notation.
