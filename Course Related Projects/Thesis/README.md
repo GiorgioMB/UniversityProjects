@@ -18,7 +18,7 @@ $\widehat A_{\rm rw}^L H^{(0)}\to \Pi H^{(0)}$, where $\Pi=\mathbf{1}\ \pi^{\top
 
 - **Positive curvature accelerates smoothing.** Uniformly positive (edge) curvature yields a **spectral gap** ($\lambda_2\le1-\varepsilon$), hence exponential contraction of components orthogonal to $\pi$: $||A_{\mathrm{rw}}^L-\Pi||_2=\lambda_2^L$.
 
-- **Negative curvature induces squashing.** When geodesic balls grow rapidly (hyperbolic‑like regions), many sources must cross **few** edges to reach a target—creating narrow cuts. Define $\alpha^{(L)}=\prod_{\ell=0}^{L-1} L_\sigma\,\|W^{(\ell)}\|_2$, then for a 2‑layer GCN the average influence from the "funneling" set into the target admits an upper bound of the form
+- **Negative curvature induces squashing.** When geodesic balls grow rapidly (hyperbolic‑like regions), many sources must cross **few** edges to reach a target—creating narrow cuts. Define $\alpha^{(L)}=\prod_{l=0}^{L-1} \mathcal L_\sigma\ ||W^{(\ell)}||_2$, then for a 2‑layer GCN the average influence from the "funneling" set into the target admits an upper bound of the form
 
 $$\frac{1}{|Q_y|}\sum_{u\in Q_y} \mathrm{Inf}^{(2)}(u\to x)\le g(c(x,y),\Delta_{\max})\ \alpha^{(2)}.$$ 
 
