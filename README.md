@@ -1,6 +1,8 @@
-# University Projects
+# University Projects Repository
+This repository archives technical projects developed during my Bachelor’s degree at Bocconi University. The work contained herein reflects a dual focus on rigorous independent research and collaborative development within student-led technical organizations.
 
-Welcome to my University Projects repository. Here, I showcase the diverse projects undertaken during my time at Bocconi University, developed individually, through coursework, and via my active participation in student associations such as BAINSA (Bocconi Artificial Intelligence and Neuroscience Association), BSDSA (Bocconi Students Data Science Association), and BSML (Bocconi Students for Machine Learning).
+Key highlights include:
+- Collaborative initiatives with BAINSA (Bocconi AI & Neuroscience Association) and BSDSA (Bocconi Students Data Science Association)
 
 ## Projects Overview
 
@@ -20,8 +22,6 @@ Welcome to my University Projects repository. Here, I showcase the diverse proje
 - **Description**: This folder contains all the required and elective projects I completed during my studies.
 - **Key Learnings**: R, Pennylane, JAX, Quantum Machine Learning, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest, Deprecated Library Restoration, Data Imputation, Stochastic Optimization, Gradient Free Quantum Optimization.
 
-## About Me
-My name is Giorgio Micaletto, and I have completed my BSc in Economics, Management, and Computer Science at Bocconi University. Throughout my academic journey, I have actively contributed to several student associations and as a research intern at both the Department of Finance at Bocconi and the Aalto University School of Science, I have focused on advancing statistical methodologies, including the development of diagnostic tools for the bridgesampling method, enhancing model validation processes.
 
 ---
 
