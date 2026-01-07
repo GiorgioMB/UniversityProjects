@@ -21,14 +21,7 @@ Welcome to my University Projects repository. Here, I showcase the diverse proje
 - **Key Learnings**: R, Pennylane, JAX, Quantum Machine Learning, Exploratory Data Analysis, Model Evaluation and Interpretation, Feature Engineering, Genetic Algorithms, Randomer Forest, Deprecated Library Restoration, Data Imputation, Stochastic Optimization, Gradient Free Quantum Optimization.
 
 ## About Me
-My name is Giorgio Micaletto, and I am currently a third-year student at Bocconi University, pursuing a BSc in Economics, Management, and Computer Science. Throughout my academic journey, I have actively contributed to several student associations and gained valuable research experience. 
-
-As a research intern at both the Department of Finance at Bocconi and the Aalto University School of Science, I have focused on advancing statistical methodologies, including the development of diagnostic tools for the bridgesampling method, enhancing model validation processes.
-
-## Connect with Me
-
-- [**LinkedIn**](linkedin.com/in/giorgio-micaletto/)
-- **Email**: `giorgio.micaletto@studbocconi.it`
+My name is Giorgio Micaletto, and I have completed my BSc in Economics, Management, and Computer Science at Bocconi University. Throughout my academic journey, I have actively contributed to several student associations and as a research intern at both the Department of Finance at Bocconi and the Aalto University School of Science, I have focused on advancing statistical methodologies, including the development of diagnostic tools for the bridgesampling method, enhancing model validation processes.
 
 ---
 
