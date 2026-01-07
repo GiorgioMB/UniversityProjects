@@ -3,6 +3,7 @@ This repository archives technical projects developed during my Bachelor’s deg
 
 Key highlights include:
 - Collaborative initiatives with BAINSA (Bocconi AI & Neuroscience Association) and BSDSA (Bocconi Students Data Science Association)
+- Independent implementations in Quantum Machine Learning (using JAX and Pennylane) and Graph Representation Learning for molecular property prediction.
 
 ## Projects Overview
 
